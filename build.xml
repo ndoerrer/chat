@@ -1,0 +1,32 @@
+<project name="chAT" default="compile" basedir=".">
+  <!-- set global properties for this build -->
+  <property name="src" location="src"/>
+  <property name="doc" location="doc"/>
+  <property name="build" location="build"/>
+
+  <target name="init">
+    <!-- Create the time stamp -->
+    <tstamp/>
+    <!-- Create the build directory structure used by compile -->
+    <mkdir dir="${build}"/>
+    <!-- Create the doc directory structure used for the API -->
+    <mkdir dir="${doc}"/>
+  </target>
+
+  <target name="compile" depends="init"
+        description="compile the source " >
+    <!-- Compile the java code from ${src} into ${build} -->
+    <javac includeantruntime="false" srcdir="${src}" destdir="${build}"/>
+  </target>
+
+  <target name="makedoc" depends="init"
+        description="create the API documentation " >
+    <javadoc author="true" private="true" sourcepath="${src}" destdir="${doc}"/>
+  </target>
+
+  <target name="clean"
+        description="clean up" >
+    <!-- Delete the ${build} and ${dist} directory trees -->
+    <delete dir="${build}"/>
+  </target>
+</project>
