@@ -1,13 +1,13 @@
 package chAT.global;
 
-import java.util.Vector;
-import java.util.List;
-import java.util.Date;
-
 import java.rmi.Remote;
 import java.rmi.RemoteException;
+import java.util.Date;
+import java.util.Vector;
 
 public interface RoomInterface extends Remote {
-	public int addMessage(Message m) throws RemoteException;
-	public List<Message> getNewerThan(Date dIn) throws RemoteException;
+	public boolean registerClient(String name) throws RemoteException;
+	public boolean addMessages() throws RemoteException;
+	public boolean submitMessage(Message m, String name) throws RemoteException;
+	public Vector<Message> requestNewMessages(Date date) throws RemoteException;
 }

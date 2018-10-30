@@ -34,8 +34,12 @@ public class Message implements Serializable{
 		return date;
 	}
 
+	public void clear(){
+		text = "";
+	}
+
 	public String toString(){
-		String s = text + "(" + author + ", " + date + ")";
+		String s = text + "\t(" + author + ", " + date + ")";
 		return s;
 	}
 }
