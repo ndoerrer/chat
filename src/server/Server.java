@@ -2,32 +2,32 @@ package chAT.server;
 
 import chAT.global.*;
 
-import java.util.List;
 import java.util.Date;
 
 import java.rmi.RemoteException;
-import java.rmi.registry.Registry;
 import java.rmi.registry.LocateRegistry;
-import java.rmi.server.UnicastRemoteObject;
-import java.rmi.AlreadyBoundException;
-
 import java.rmi.Naming;
 import java.net.MalformedURLException;
 
-public class Server{
-	public static void offer(RoomInterface r, String host, String name, int port){
-/*		Registry registry;
-		try {
-			registry = LocateRegistry.getRegistry();
-			//registry = LocateRegistry.getRegistry("rmi://" + host + ":" + port);
-			registry.rebind(name, r);
-			System.out.println("Room (" + name + ") ready");
-		} catch (RemoteException e) {
-			System.out.println("RemoteException in offer method! [Server]");
-			e.printStackTrace();
-			System.exit(1);
-		}*/
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
+import java.net.NetworkInterface;
+import java.util.Enumeration;
+
+public class Server{
+	private static void checkInterfaces(){
+		try {
+			final Enumeration<NetworkInterface> netifs = NetworkInterface.getNetworkInterfaces();
+	        while (netifs.hasMoreElements())
+				System.out.println(netifs.nextElement().getName());
+	    } catch (Exception e) {
+	        System.out.println("Exception in getNetworkInterfaces");
+			System.exit(1);
+	    }
+	}
+
+	public static void offer(RoomInterface r, String host, String name, int port){
 		try {
 			LocateRegistry.createRegistry(port);
 			System.out.println("Created registry on port " + port);
@@ -37,6 +37,7 @@ public class Server{
 
 		try {
 			Naming.rebind("//" + host + ":" + port + "/" + name, r);
+			System.out.println("Binding RoomInterface to rmi://"+host+":"+port+"/"+name);
 			System.out.println("RoomInterface (" + name + ") ready");
 		} catch (MalformedURLException e) {
 			System.out.println("malformed URL in offer method!");
@@ -54,7 +55,16 @@ public class Server{
 			System.out.println("RemoteException in room creation");
 			System.exit(1);
 		}*/
-		String host = "192.168.1.4";		//"localhost";		//myip
+
+		checkInterfaces();
+		try{
+			InetAddress ip = InetAddress.getLocalHost();
+			System.out.println("DEBUG: my ip: " + ip.getHostAddress());
+		} catch (UnknownHostException e){
+			System.out.println("UnknownHostExpection in getLocalHost()");
+			System.exit(1);
+		}
+		String host = "10.196.230.245";		//"localhost";		//myip
 		String name = "chAT-test";
 		int port = 1099;
 		offer(room, host, name, port);

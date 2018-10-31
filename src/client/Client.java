@@ -4,9 +4,6 @@ import chAT.global.*;
 
 import java.rmi.RemoteException;
 import java.rmi.NotBoundException;
-import java.rmi.registry.Registry;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.server.UnicastRemoteObject;
 import java.rmi.Naming;
 import java.net.MalformedURLException;
 
@@ -19,48 +16,57 @@ import java.util.Date;
 public class Client{
 	private static RoomInterface findRoom(String host, String name, int port) {
 		RoomInterface roomI = null;
-		Registry registry = null;
-/*		try {
-			//registry = LocateRegistry.getRegistry();
-			//registry = LocateRegistry.getRegistry(host, port);
-			//registry = LocateRegistry.getRegistry("rmi://" + host + ":" + port);
-		} catch (RemoteException e){
-			System.out.println("RemoteException: couldnt get Registry");
-		}*/
 		try{
-			//d = (Discusser) registry.lookup("rmi://" + host + ":" + port + "/" + name);
-			//Object o = registry.lookup(name);
 			Object o = Naming.lookup("rmi://" + host + ":" + port + "/" + name);
+			System.out.println("Requesting Object rmi://" + host + ":" + port + "/" + name);
 			roomI = (RoomInterface) o;
 			System.out.println ("RoomInterface (" + name + ") found");
-		} catch (NotBoundException | RemoteException e) {
-			System.out.println("NotBound- or RemoteExpcetion: couldnt lookup " + name);
+		} catch (NotBoundException e) {
+			System.out.println("NotBoundException: couldnt lookup " + name);
 			System.exit(1);
+		} catch (RemoteException e) {
+			System.out.println("RemoteExpcetion: couldnt lookup " + name);
+			System.exit(2);
 		} catch (MalformedURLException e){
 			System.out.println("MalformedURLExpcetion: couldnt lookup " + name);
-			System.exit(1);
+			System.exit(3);
 		}
 		return roomI;
 	}
 
 	public static void main(String [] args){
-		String host = "192.168.1.4";		//"localhost";
-		String name = "chAT-test";
+		//String host = "10.196.230.245";		//"localhost";
 		int port = 1099;
-		String input="", myname="dummy";
+		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+		String host, input="", myname="", name = "chAT-test";		//idea: also as input?
+		if (args.length > 0)
+			host = args[0];
+		else {
+			System.out.print("Please enter host name: ");
+			try{
+				host = br.readLine();
+			} catch (IOException e){
+				System.out.println("IOException in host input!");
+				return;
+			}
+		}
 		RoomInterface roomI = findRoom(host, name, port);
 
-		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-		System.out.print("Please enter name: ");
+		boolean success = false;
 		try{
-			myname = br.readLine();
-		} catch (IOException e){
-			System.out.println("IOException in name input!");
-			return;
-		}
-
-		try{
-			roomI.registerClient(myname);
+			do {
+				System.out.print("Please enter avatar name: ");
+				try{
+					myname = br.readLine();
+				} catch (IOException e){
+					System.out.println("IOException in name input!");
+					return;
+				}
+				success = roomI.registerClient(myname);
+				if (!success)
+					System.out.println("rejected!");
+			} while(success == false);
+			System.out.println("Successfully registered client");
 		} catch (RemoteException e){
 			System.out.println("RemoteException in registerClient");
 			System.exit(1);
@@ -77,7 +83,7 @@ public class Client{
 			if (!input.equals("")){
 				m = new Message(myname, input);
 				try{
-					System.out.println("submiting message: "+m);
+					System.out.println("DEBUG: submiting message: "+m);
 					roomI.submitMessage(m, myname);
 					input = "";
 				} catch (RemoteException e){
