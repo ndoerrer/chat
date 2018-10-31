@@ -12,8 +12,8 @@ import java.net.MalformedURLException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
-import java.net.NetworkInterface;
-import java.util.Enumeration;
+import java.net.NetworkInterface;		//remove?
+import java.util.Enumeration;			//remove?
 
 public class Server{
 	private static void checkInterfaces(){
@@ -51,17 +51,19 @@ public class Server{
 
 	public static void main(String [] args) throws RemoteException{		//TODO: better way??
 		RoomInterface room = new Room();
-	/*	} catch(RemoteException e){
-			System.out.println("RemoteException in room creation");
+		try{
+			System.out.println("Generating oneTimeKey " + room.makeOneTimeKey());
+		} catch (RemoteException e){
+			System.out.println("RemoteException in makeOneTimeKey");
 			System.exit(1);
-		}*/
+		}
 
 		checkInterfaces();
 		try{
 			InetAddress ip = InetAddress.getLocalHost();
 			System.out.println("DEBUG: my ip: " + ip.getHostAddress());
 		} catch (UnknownHostException e){
-			System.out.println("UnknownHostExpection in getLocalHost()");
+			System.out.println("UnknownHostExpection in getLocalHost");
 			System.exit(1);
 		}
 		String host = "10.196.230.245";		//"localhost";		//myip

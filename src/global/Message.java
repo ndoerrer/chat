@@ -38,6 +38,11 @@ public class Message implements Serializable{
 		text = "";
 	}
 
+	public boolean isCleared(){
+		return (text == "");
+	}
+
+@Override
 	public String toString(){
 		String s = text + "\t(" + author + ", " + date + ")";
 		return s;

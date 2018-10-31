@@ -2,17 +2,21 @@ package chAT.global;
 
 import java.util.Vector;
 import java.util.Date;
+
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.Date;
-//TODO: store/load room
 
+import java.security.SecureRandom;
+
+//TODO: store/load room
 public class Room extends UnicastRemoteObject implements RoomInterface{
 	private Vector<Message> messages;
 	private Vector<String> clients;	//TODO: at register: name must be unique!!
 									// better identifier? ip+mac+random? ip+name? hash?
 	private Vector<Boolean> new_message;
 	private Vector<Message> client_messages;
+
+	private String oneTimeKey = null;		//maybe not in clear text?
 
 	public Room() throws RemoteException{
 		messages = new Vector<Message>();
@@ -49,8 +53,8 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 		return added;
 	}
 
-	public boolean submitMessage(Message m, String name) throws RemoteException{
-		int index = clients.indexOf(name);
+	public boolean submitMessage(Message m) throws RemoteException{
+		int index = clients.indexOf(m.getAuthor());
 		if (client_messages.get(index) != null)
 			return false;
 		else {
@@ -73,6 +77,32 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 		}
 		System.out.println("DEBUG: adding news of lenght " + news.size());
 		return news;
+	}
+
+	public String makeOneTimeKey() throws RemoteException{
+		oneTimeKey = "";
+		SecureRandom srand = new SecureRandom();
+		byte bytes[] = new byte[32];
+		srand.nextBytes(bytes);
+        for (byte b : bytes) 
+            oneTimeKey += String.format("%02x", b);		//conversion to hex
+		return oneTimeKey;
+	}
+
+	public Message injectCommand(Message m) throws RemoteException{
+		String command = m.getText();
+		switch(command){
+			case "makeOneTimeKey":
+				String key;
+				System.out.println("oneTimeKey generation called by " + m.getAuthor());
+				return new Message("system", "new oneTimeKey: " + makeOneTimeKey());
+			default:
+				return new Message("system", "invalid command: !" + command);
+		}
+	}
+
+	public String printHelp() throws RemoteException{
+		return "bla";
 	}
 
 	//TODO: get clients

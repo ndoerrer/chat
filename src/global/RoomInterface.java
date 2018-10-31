@@ -8,6 +8,9 @@ import java.util.Vector;
 public interface RoomInterface extends Remote {
 	public boolean registerClient(String name) throws RemoteException;
 	public boolean addMessages() throws RemoteException;
-	public boolean submitMessage(Message m, String name) throws RemoteException;
+	public boolean submitMessage(Message m) throws RemoteException;
 	public Vector<Message> requestNewMessages(Date date) throws RemoteException;
+	public String makeOneTimeKey() throws RemoteException;
+	public Message injectCommand(Message m) throws RemoteException;
+	public String printHelp() throws RemoteException;
 }

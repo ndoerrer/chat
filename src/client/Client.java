@@ -35,7 +35,6 @@ public class Client{
 	}
 
 	public static void main(String [] args){
-		//String host = "10.196.230.245";		//"localhost";
 		int port = 1099;
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 		String host, input="", myname="", name = "chAT-test";		//idea: also as input?
@@ -81,15 +80,27 @@ public class Client{
 				System.out.println("IOException in get text input");
 			}
 			if (!input.equals("")){
-				m = new Message(myname, input);
-				try{
-					System.out.println("DEBUG: submiting message: "+m);
-					roomI.submitMessage(m, myname);
-					input = "";
-				} catch (RemoteException e){
-					System.out.println("RemoteException on submitMessage!\n"+ e);
-					System.exit(1);
+				if (input.charAt(0) == '!'){
+					m = new Message(myname, input.substring(1));
+					try{
+						System.out.println("DEBUG: injecting command: "+m);
+						System.out.println(roomI.injectCommand(m));
+					} catch (RemoteException e){
+						System.out.println("RemoteException on submitMessage!\n"+ e);
+						System.exit(1);
+					}
 				}
+				else{
+					m = new Message(myname, input);
+					try{
+						System.out.println("DEBUG: submiting message: "+m);
+						roomI.submitMessage(m);
+					} catch (RemoteException e){
+						System.out.println("RemoteException on submitMessage!\n"+ e);
+						System.exit(1);
+					}
+				}
+				input = "";
 			}
 			try{
 				for(Message news : roomI.requestNewMessages(date)){
