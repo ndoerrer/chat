@@ -6,7 +6,10 @@ import java.util.Date;
 import java.util.Vector;
 
 public interface RoomInterface extends Remote {
-	public boolean registerClient(String name) throws RemoteException;
+	public int userStatus(String name) throws RemoteException;
+	public boolean registerClient(String name, String key, String passwd) throws RemoteException;
+	public boolean login(String name, String passwd) throws RemoteException;
+	public boolean logout(String name) throws RemoteException;
 	public boolean addMessages() throws RemoteException;
 	public boolean submitMessage(Message m) throws RemoteException;
 	public Vector<Message> requestNewMessages(Date date) throws RemoteException;

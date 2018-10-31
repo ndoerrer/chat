@@ -50,23 +50,17 @@ public class Server{
 	}
 
 	public static void main(String [] args) throws RemoteException{		//TODO: better way??
-		RoomInterface room = new Room();
-		try{
-			System.out.println("Generating oneTimeKey " + room.makeOneTimeKey());
-		} catch (RemoteException e){
-			System.out.println("RemoteException in makeOneTimeKey");
-			System.exit(1);
-		}
+		RoomInterface room = new Room( (args.length > 0 && args[0].equals("makeonetimekey")) );
 
 		checkInterfaces();
+		String host = "localhost";
 		try{
 			InetAddress ip = InetAddress.getLocalHost();
-			System.out.println("DEBUG: my ip: " + ip.getHostAddress());
+			host = ip.getHostAddress();
 		} catch (UnknownHostException e){
 			System.out.println("UnknownHostExpection in getLocalHost");
 			System.exit(1);
 		}
-		String host = "10.196.230.245";		//"localhost";		//myip
 		String name = "chAT-test";
 		int port = 1099;
 		offer(room, host, name, port);
