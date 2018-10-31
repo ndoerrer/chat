@@ -161,8 +161,8 @@ public class Client{
 				if (input.charAt(0) == '!'){
 					m = new Message(myname, input.substring(1));
 					try{
-						if (input.equals("logout") || input.equals("exit"))
-							System.exit(0);
+						if (input.equals("!logout") || input.equals("!exit"))		//idea: client side command method
+							System.exit(0);											//class variables for myname, etc
 						System.out.println("DEBUG: injecting command: "+m);
 						m = roomI.injectCommand(m);
 						System.out.println(m);

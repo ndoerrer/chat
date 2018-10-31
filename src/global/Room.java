@@ -78,7 +78,7 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 		System.out.println(hash);
 		try{
 			BufferedWriter bw = new BufferedWriter(new FileWriter(clientFile, true));
-			bw.append(name+"\t"+hash);
+			bw.append(name+"\t"+hash+"\n");
 			bw.close();
 		} catch (IOException e) {
 			System.out.println("IOException in writing clientFile!");
@@ -198,9 +198,9 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 			case "listusers":
 			case "listUsers":
 				return new Message("system", printUserList());
-			case "logout":
+			/*case "logout":
 				logout(m.getAuthor());
-				return new Message("system", "logged out user " + m.getAuthor());
+				return new Message("system", "logged out user " + m.getAuthor());*/
 			default:
 				return new Message("system", "invalid command: !" + command + "\ttry !help");
 		}
@@ -209,8 +209,7 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 	public String printHelp() throws RemoteException{
 		String result = "!help: to get information about commands\n" +
 					"!makeOneTimeKey: to create a key for a new user (usable only once)\n" +
-					"!userlist: to show all online users\n" +
-					"!logout: logs you out (leaving room)";
+					"!userlist: to show all online users";
 		return result;
 	}
 
