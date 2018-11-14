@@ -11,58 +11,33 @@ import java.util.Date;
 
 import java.io.Console;
 
-class Shutdown {
-	private Thread thread = null;
+class ClientShutdownThread extends Thread {
 	private RoomInterface roomI;
 	private String myname;
 	private Date date;
 
-	public Shutdown(RoomInterface roomI_in, String myname_in, Date date_in) {
+	public ClientShutdownThread(RoomInterface roomI_in, String myname_in, Date date_in) {
+		super();
 		roomI = roomI_in;
 		myname = myname_in;
-		thread = new Thread("Shutdown_thread") {
-			public void run() {
-				while (true) {
-					//System.out.println("[Sample thread] Sample thread speaking...");
-					try {
-						Thread.currentThread().sleep(1000);
-					} catch (InterruptedException ie) {
-						break;
-					}
-				}
-			}
-		};
-		thread.start();
+		date = date_in;
 	}
 
-	public void stopThread() {
+	public void run() {
 		//TODO: save timestamp as file ".<myname>.time"
 		boolean success = false;
 		try{
 			success = roomI.logout(myname);
 		} catch (RemoteException e){
 			System.out.println("RemoteException in logout!");
-			thread.interrupt();
+			this.interrupt();
 		}
 		if (success)
 			System.out.println("Logging out complete");
 		else
 			System.out.println("Logging out failed!");
 		System.out.println("Shutting down");
-		thread.interrupt();
-	}
-}
-
-class ShutdownThread extends Thread {
-	private Shutdown shutdown = null;
-
-	public ShutdownThread(Shutdown shutdown) {
-		super();
-		this.shutdown = shutdown;
-	}
-
-	public void run() {
-		shutdown.stopThread();
+		this.interrupt();
 	}
 }
 
@@ -146,15 +121,9 @@ public class Client{
 
 		Date date = new Date();
 
-		/* add shutdown hook */
-		try {
-			Shutdown shutdown = new Shutdown(roomI, myname, date);
-			Runtime.getRuntime().addShutdownHook(new ShutdownThread(shutdown));
-			System.out.println("Shutdown hook added");
-		} catch (Throwable t) {
-			System.out.println("Could not add Shutdown hook!");
-    	}
-		/* end of shutdown hook */
+		//adding ShutdownHook
+		Runtime.getRuntime().addShutdownHook(new ClientShutdownThread(roomI, myname, date));
+		System.out.println("Shutdown hook added");
 
 		Message m = new Message();
 		boolean logged_in = true;
@@ -166,7 +135,7 @@ public class Client{
 					try{
 						if (input.equals("!logout") || input.equals("!exit"))		//idea: client side command method
 							System.exit(0);											//class variables for myname, etc
-						System.out.println("DEBUG: injecting command: "+m);
+						//System.out.println("DEBUG: injecting command: "+m);
 						m = roomI.injectCommand(m);
 						System.out.println(m);
 					} catch (RemoteException e){
@@ -177,7 +146,7 @@ public class Client{
 				else{
 					m = new Message(myname, input);
 					try{
-						System.out.println("DEBUG: submiting message: "+m);
+						//System.out.println("DEBUG: submiting message: "+m);
 						roomI.submitMessage(m);
 					} catch (RemoteException e){
 						System.out.println("RemoteException on submitMessage!\n"+ e);

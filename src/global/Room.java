@@ -43,7 +43,7 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 		if (!(new File(client_file)).exists()){
 			System.out.println("Creating new room directory and client_file");
 			try{
-				(new File(room_directory)).mkdir();			//create room directory
+				(new File(room_directory)).mkdirs();		//create room directory
 				(new FileWriter(client_file)).close();		//create new client file
 			} catch (IOException e){
 				System.out.println("IOException in creating client_file!");
@@ -170,7 +170,7 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 			return false;				//user not logged in!
 		else {
 			client_messages.set(index, new Message(m));
-			System.out.println("DEBUG: adding message " + client_messages.get(index));
+			//System.out.println("DEBUG: adding message " + client_messages.get(index));
 			return true;
 		}
 	}
@@ -180,13 +180,13 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 		Message m;
 		for(int i=messages.size()-1; i>0; i--){
 			m = messages.get(i);
-			System.out.println("DEBUG: checking message " + i + ": " + m);
+			//System.out.println("DEBUG: checking message " + i + ": " + m);
 			if (m.getDate().after(date))
 				news.add(0, m);
 			else
 				break;
 		}
-		System.out.println("DEBUG: adding news of lenght " + news.size());
+		//System.out.println("DEBUG: adding news of lenght " + news.size());
 		return news;
 	}
 
@@ -234,6 +234,4 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 			result += user + "\n";
 		return result.substring(0, result.length()-1);
 	}
-
-	//TODO: get registered users function
 }
