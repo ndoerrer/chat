@@ -95,12 +95,15 @@ public class Client{
 			System.exit(0);
 		}
 
-		String host, input="", myname="", name="chAT-test", passwd="", key="";		//idea: name as input?
+		String host, input="", myname="", passwd="", key="";
 		if (args.length > 0)
 			host = args[0];
 		else
 			host = new String(console.readLine("Please enter host name: "));
-		RoomInterface roomI = findRoom(host, name, port);
+		String room_name = new String(console.readLine("Please enter room name: "));
+		if (room_name.equals(""))
+			room_name = "default";
+		RoomInterface roomI = findRoom(host, room_name, port);
 
 		boolean pwset = false, success = false;
 		int status = -1;		//-1: undefined, 0: new user, 1: registered user, 2: online user
@@ -119,7 +122,7 @@ public class Client{
 						}
 						else{
 							System.out.println("Successfully registered User " + myname);
-						}	//continue with login
+						}			//continue with login
 					case 1:
 						if (!pwset)
 							passwd = new String(console.readPassword("Password: "));		//test it!
@@ -132,7 +135,7 @@ public class Client{
 					case 2:
 						System.out.println("User already logged in!");
 						break;
-					default:
+					default:		//should never happen
 						System.out.println("Undefined user status!");
 				}
 			} while(!success);
@@ -143,7 +146,7 @@ public class Client{
 
 		Date date = new Date();
 
-		/* EXPERIMENTAL */
+		/* add shutdown hook */
 		try {
 			Shutdown shutdown = new Shutdown(roomI, myname, date);
 			Runtime.getRuntime().addShutdownHook(new ShutdownThread(shutdown));
@@ -151,7 +154,7 @@ public class Client{
 		} catch (Throwable t) {
 			System.out.println("Could not add Shutdown hook!");
     	}
-		/* END OF EXPERIMENTAL */
+		/* end of shutdown hook */
 
 		Message m = new Message();
 		boolean logged_in = true;

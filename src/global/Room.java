@@ -11,35 +11,50 @@ import java.security.MessageDigest;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 
+import java.io.File;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 
-//TODO: store/load room
+//TODO: store/load room -> shutdownhook
 public class Room extends UnicastRemoteObject implements RoomInterface{
+	private final String room_name;
+	private final String room_directory;
 	private Vector<Message> messages;
 	private Vector<String> clients;
 	private Vector<Message> client_messages;
 
-	private String oneTimeKey = null;		//maybe not in clear text?
-	private final String clientFile = "../data/clients.dat";
+	private String one_time_key = null;						//not preserved on server shutdown!!
+	private final String client_file;
 	private final String hash_algorithm = "SHA-256";
 
-	public Room() throws RemoteException{
+	public Room(String roomname_input) throws RemoteException{
+		room_name = roomname_input;
+		room_directory = "../data/" + room_name + "/";
 		messages = new Vector<Message>();
 		messages.add(new Message("system", "hello world"));
 		clients = new Vector<String>();
 		clients.add("system");
 		client_messages = new Vector<Message>();
 		client_messages.add(null);
+		client_file = room_directory + "/clients.dat";
+		if (!(new File(client_file)).exists()){
+			System.out.println("Creating new room directory and client_file");
+			try{
+				(new File(room_directory)).mkdir();			//create room directory
+				(new FileWriter(client_file)).close();		//create new client file
+			} catch (IOException e){
+				System.out.println("IOException in creating client_file!");
+			}
+		}
 	}
 
-	public Room(boolean makeOneTimeKey) throws RemoteException{
-		this();
+	public Room(String roomname_input, boolean makeOneTimeKey) throws RemoteException{
+		this(roomname_input);
 		if (makeOneTimeKey)
-			System.out.println("Generating oneTimeKey " + makeOneTimeKey());
+			System.out.println("Generating one_time_key " + makeOneTimeKey());
 	}
 
 	public int userStatus(String name) throws RemoteException{
@@ -48,13 +63,13 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 		boolean found = false;
 		BufferedReader br;
 		try{
-			br = new BufferedReader(new FileReader(clientFile));
+			br = new BufferedReader(new FileReader(client_file));
 			String line;
 			while ((line = br.readLine()) != null && !found)
 				found = !(line.indexOf(name) == -1);
 			br.close();
 		} catch (IOException e) {
-			System.out.println("IOException in reading clientFile!");
+			System.out.println("IOException in reading client_file!");
 		}
 		return (found ? 1 : 0);
 	}	//-1: undefined, 0: new user, 1: registered user, 2: online user
@@ -62,7 +77,7 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 	public boolean registerClient(String name, String key, String passwd) throws RemoteException{
 		if (userStatus(name) != 0)
 			return false;
-		if (!key.equals(oneTimeKey))
+		if (!key.equals(one_time_key))
 			return false;							//key is incorrect!			-> false
 		byte [] bytes = new byte[1];				//size of the SHA256 hash is 32
 		try{
@@ -77,11 +92,11 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
             hash += String.format("%02x", b);		//conversion to hex
 		System.out.println(hash);
 		try{
-			BufferedWriter bw = new BufferedWriter(new FileWriter(clientFile, true));
+			BufferedWriter bw = new BufferedWriter(new FileWriter(client_file, true));
 			bw.append(name+"\t"+hash+"\n");
 			bw.close();
 		} catch (IOException e) {
-			System.out.println("IOException in writing clientFile!");
+			System.out.println("IOException in writing client_file!");
 			return true;
 		}
 		return true;								//successfully added client	-> true
@@ -91,7 +106,7 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 		String stored_hash = "", computed_hash = "";
 		BufferedReader br;
 		try{
-			br = new BufferedReader(new FileReader(clientFile));
+			br = new BufferedReader(new FileReader(client_file));
 			String line;
 			while ((line = br.readLine()) != null){
 				if( !(line.indexOf(name) == -1) ){
@@ -101,7 +116,7 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 			}
 			br.close();
 		} catch (IOException e) {
-			System.out.println("IOException in reading clientFile!");
+			System.out.println("IOException in reading client_file!");
 			return false;
 		}
 
@@ -176,13 +191,13 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 	}
 
 	public String makeOneTimeKey() throws RemoteException{
-		oneTimeKey = "";
+		one_time_key = "";
 		SecureRandom srand = new SecureRandom();
 		byte bytes[] = new byte[16];					// = 128 Bit
 		srand.nextBytes(bytes);
         for (byte b : bytes) 
-            oneTimeKey += String.format("%02x", b);		//conversion to hex
-		return oneTimeKey;
+            one_time_key += String.format("%02x", b);		//conversion to hex
+		return one_time_key;
 	}
 
 	public Message injectCommand(Message m) throws RemoteException{
@@ -198,7 +213,7 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 			case "listusers":
 			case "listUsers":
 				return new Message("system", printUserList());
-			/*case "logout":
+			/*case "logout":			//should be only initiated by asynchronous logout
 				logout(m.getAuthor());
 				return new Message("system", "logged out user " + m.getAuthor());*/
 			default:
@@ -220,5 +235,5 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 		return result.substring(0, result.length()-1);
 	}
 
-	//TODO: get registered users function, request+store hashed password on disk
+	//TODO: get registered users function
 }

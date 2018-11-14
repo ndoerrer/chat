@@ -3,6 +3,7 @@ package chAT.server;
 import chAT.global.*;
 
 import java.util.Date;
+import java.util.Arrays;
 
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -12,15 +13,19 @@ import java.net.MalformedURLException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
-import java.net.NetworkInterface;		//remove?
-import java.util.Enumeration;			//remove?
+import java.net.NetworkInterface;
+import java.util.Enumeration;
 
 public class Server{
 	private static void checkInterfaces(){
 		try {
 			final Enumeration<NetworkInterface> netifs = NetworkInterface.getNetworkInterfaces();
-	        while (netifs.hasMoreElements())
-				System.out.println(netifs.nextElement().getName());
+	        while (netifs.hasMoreElements()){
+				NetworkInterface netif = netifs.nextElement();
+				Enumeration<InetAddress> i = netif.getInetAddresses();
+				while (i.hasMoreElements())
+					System.out.println(netif.getName()+": "+ i.nextElement().getHostAddress());
+			}
 	    } catch (Exception e) {
 	        System.out.println("Exception in getNetworkInterfaces");
 			System.exit(1);
@@ -50,7 +55,10 @@ public class Server{
 	}
 
 	public static void main(String [] args) throws RemoteException{		//TODO: better way??
-		RoomInterface room = new Room( (args.length > 0 && args[0].equals("makeonetimekey")) );
+		RoomInterface room;
+		String room_name = (args.length > 0) ? args[0] : "default";
+		boolean makeonetimekey = Arrays.asList(args).contains("--makeonetimekey");
+		room = new Room(room_name, makeonetimekey);
 
 		checkInterfaces();
 		String host = "localhost";
@@ -61,9 +69,8 @@ public class Server{
 			System.out.println("UnknownHostExpection in getLocalHost");
 			System.exit(1);
 		}
-		String name = "chAT-test";
 		int port = 1099;
-		offer(room, host, name, port);
+		offer(room, host, room_name, port);
 		Message m = new Message();
 		while(true){
 			try{
