@@ -8,8 +8,9 @@ import java.rmi.Naming;
 import java.net.MalformedURLException;
 
 import java.util.Date;
-
 import java.io.Console;
+
+import java.security.PublicKey;
 
 class ClientShutdownThread extends Thread {
 	private RoomInterface roomI;
@@ -79,6 +80,10 @@ public class Client{
 		if (room_name.equals(""))
 			room_name = "default";
 		RoomInterface roomI = findRoom(host, room_name, port);
+		Crypto crypto = new Crypto();
+		crypto.generateDHKeyPair();
+		crypto.generateRSAKeyPair();
+		PublicKey room_RSA_public_key, room_DH_public_key;
 
 		boolean pwset = false, success = false;
 		int status = -1;		//-1: undefined, 0: new user, 1: registered user, 2: online user
@@ -100,10 +105,17 @@ public class Client{
 						}			//continue with login
 					case 1:
 						if (!pwset)
-							passwd = new String(console.readPassword("Password: "));		//test it!
-						success = roomI.login(myname, passwd);
-						if(success)
+							passwd = new String(console.readPassword("Password: "));
+						//System.out.println("DEBUG: DHpubKey:"+crypto.getDHPublicKey());
+						//System.out.println("DEBUG: RSApubKey:"+crypto.getRSAPublicKey());
+						room_DH_public_key = roomI.login(myname, passwd, crypto.getDHPublicKey(),
+															crypto.getRSAPublicKey());
+						success = (room_DH_public_key != null);
+						if(success){
+							crypto.computeSharedSecret(room_DH_public_key);
+							crypto.setForeignRSAKey(roomI.getRSAPublicKey(myname));
 							System.out.println("Welcome " + myname);
+						}
 						else
 							System.out.println("Wrong password");
 						break;

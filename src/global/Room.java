@@ -18,6 +18,8 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 
+import java.security.PublicKey;
+
 //TODO: store/load room -> shutdownhook
 public class Room extends UnicastRemoteObject implements RoomInterface{
 	private final String room_name;
@@ -29,6 +31,7 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 	private String one_time_key = null;						//not preserved on server shutdown!!
 	private final String client_file;
 	private final String hash_algorithm = "SHA-256";
+	private Vector<Crypto> cryptos;
 
 	public Room(String roomname_input) throws RemoteException{
 		room_name = roomname_input;
@@ -38,7 +41,7 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 		clients = new Vector<String>();
 		clients.add("system");
 		client_messages = new Vector<Message>();
-		client_messages.add(null);
+		client_messages.add(null);		//for system
 		client_file = room_directory + "/clients.dat";
 		if (!(new File(client_file)).exists()){
 			System.out.println("Creating new room directory and client_file");
@@ -49,6 +52,8 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 				System.out.println("IOException in creating client_file!");
 			}
 		}
+		cryptos = new Vector<Crypto>();
+		cryptos.add(null);				//for system
 	}
 
 	public Room(String roomname_input, boolean makeOneTimeKey) throws RemoteException{
@@ -82,7 +87,6 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 		byte [] bytes = new byte[1];				//size of the SHA256 hash is 32
 		try{
 			MessageDigest digest = MessageDigest.getInstance(hash_algorithm);
-			bytes = new byte[digest.getDigestLength()];	//size of the SHA256 hash
 			bytes = digest.digest(passwd.getBytes(StandardCharsets.UTF_8));
 		} catch (NoSuchAlgorithmException e){
 			return false;
@@ -90,19 +94,20 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 		String hash = "";
         for (byte b : bytes) 
             hash += String.format("%02x", b);		//conversion to hex
-		System.out.println(hash);
+		//System.out.println("DEBUG: pw hash = "+hash);
 		try{
 			BufferedWriter bw = new BufferedWriter(new FileWriter(client_file, true));
 			bw.append(name+"\t"+hash+"\n");
 			bw.close();
 		} catch (IOException e) {
 			System.out.println("IOException in writing client_file!");
-			return true;
+			return false;
 		}
 		return true;								//successfully added client	-> true
 	}
 
-	public boolean login(String name, String passwd){
+	public PublicKey login(String name, String passwd,
+								PublicKey user_DHkey, PublicKey user_RSAkey){
 		String stored_hash = "", computed_hash = "";
 		BufferedReader br;
 		try{
@@ -117,27 +122,45 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 			br.close();
 		} catch (IOException e) {
 			System.out.println("IOException in reading client_file!");
-			return false;
+			return null;
 		}
 
-		byte [] bytes = new byte[1];				//size of the SHA256 hash is 32
+		System.out.println("DEBUG: client file read");
+		byte [] bytes = new byte[1];					//size of the SHA256 hash is 32
 		try{
 			MessageDigest digest = MessageDigest.getInstance(hash_algorithm);
 			bytes = new byte[digest.getDigestLength()];	//size of the SHA256 hash
 			bytes = digest.digest(passwd.getBytes(StandardCharsets.UTF_8));
 		} catch (NoSuchAlgorithmException e){
-			return false;
+			return null;
 		}
         for (byte b : bytes) 
             computed_hash += String.format("%02x", b);		//conversion to hex
+		System.out.println("DEBUG: comparing hashes");
 
 		if (!stored_hash.equals(computed_hash) || computed_hash.equals(""))
-			return false;
+			return null;
 
 		clients.add(name);
 		client_messages.add(null);
+
+		System.out.println("DEBUG: adding crypto");
+		cryptos.add(new Crypto());
+		cryptos.get(cryptos.size()-1).generateDHKeyPair();
+		cryptos.get(cryptos.size()-1).computeSharedSecret(user_DHkey);
+		System.out.println("DEBUG: finished DH");
+		cryptos.get(cryptos.size()-1).generateRSAKeyPair();
+		cryptos.get(cryptos.size()-1).setForeignRSAKey(user_RSAkey);
+
 		//TODO: message from system to all -> systemTAG boolean for messages?
-		return true;
+		return cryptos.get(cryptos.size()-1).getDHPublicKey();
+	}
+
+	public PublicKey getRSAPublicKey(String name) throws RemoteException{
+		int index = clients.indexOf(name);
+		if (index == -1)
+			return null;
+		return cryptos.get(index).getRSAPublicKey();
 	}
 
 	public boolean logout(String name){		// logout after some idletime?

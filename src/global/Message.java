@@ -7,9 +7,13 @@ public class Message implements Serializable{
 	private Date date;
 	private String author;
 	private String text;
+	private boolean signed;
+	private String signature;
 
 	public Message(){
 		date = new Date(); 	//current time and date
+		signature = "";
+		signed = false;
 	}
 
 	public Message(String authorIn, String textIn){
@@ -20,6 +24,15 @@ public class Message implements Serializable{
 
 	public Message(Message m){
 		this(m.getAuthor(), m.getText());
+		signed = m.isSigned();
+		signature = m.getSignature();
+	}
+
+	public boolean sign(Crypto crypto){
+		signature = crypto.getSignature(getText());
+		if (signature != "")
+			signed = true;
+		return signed;
 	}
 
 	public String getText(){
@@ -34,12 +47,16 @@ public class Message implements Serializable{
 		return date;
 	}
 
+	public String getSignature(){
+		return signature;
+	}
+
 	public void clear(){
 		text = "";
 	}
 
-	public boolean isCleared(){
-		return (text == "");
+	public boolean isSigned(){
+		return signed;
 	}
 
 @Override
