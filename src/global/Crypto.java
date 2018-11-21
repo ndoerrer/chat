@@ -151,6 +151,7 @@ public class Crypto{
 	}
 
 	public boolean verifySignature(String text, String signature, Key key){
+		//System.out.println("DEBUG: text="+text);
 		byte [] hash_from_text = getHash(text);
 		byte [] hash_from_signature;
 		byte [] bytes = Base64.getDecoder().decode(signature);

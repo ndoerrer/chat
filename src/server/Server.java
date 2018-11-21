@@ -81,7 +81,7 @@ public class Server{
 				System.exit(1);
 			}
 			try{
-				Thread.sleep(50);	//TODO: exact time
+				Thread.sleep(50);	//exact time?
 			} catch(InterruptedException e){
 				System.out.println("InterruptedException!");
 			}

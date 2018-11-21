@@ -12,20 +12,50 @@ import java.io.Console;
 
 import java.security.PublicKey;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.File;
+
 class ClientShutdownThread extends Thread {
 	private RoomInterface roomI;
 	private String myname;
 	private Date date;
+	private String roomname;
 
-	public ClientShutdownThread(RoomInterface roomI_in, String myname_in, Date date_in) {
+	public ClientShutdownThread(RoomInterface roomI_in, String myname_in,
+									Date date_in, String roomname_in) {
 		super();
 		roomI = roomI_in;
 		myname = myname_in;
 		date = date_in;
+		roomname = roomname_in;
+	}
+
+	private void storeTimestamp(){
+		String timestamp_file = "../data/" + roomname + "/" + myname + ".time";
+		if (!(new File(timestamp_file)).exists()){
+			System.out.println("Creating new room directory and timestampfile");
+			try{
+				(new File(roomname)).mkdirs();				//create room directory
+				(new FileWriter(timestamp_file)).close();	//create new client file
+			} catch (IOException e){
+				System.out.println("IOException in creating timestamp file!");
+			}
+		}
+		try{
+			BufferedWriter bw = new BufferedWriter(new FileWriter(timestamp_file));
+			bw.write( ""+(new Date()).getTime() );
+			bw.close();
+		} catch (IOException e) {
+			System.out.println("IOException in writing timestamp file!");
+		}
 	}
 
 	public void run() {
-		//TODO: save timestamp as file ".<myname>.time"
+		storeTimestamp();
 		boolean success = false;
 		try{
 			success = roomI.logout(myname);
@@ -43,6 +73,22 @@ class ClientShutdownThread extends Thread {
 }
 
 public class Client{
+	private static Date loadDate(String roomname, String myname){
+		String timestamp_file = "../data/" + roomname + "/" + myname + ".time";
+		long milliseconds = 0;
+		if ( (new File(timestamp_file)).exists() ){
+			try{
+				BufferedReader br = new BufferedReader(new FileReader(timestamp_file));
+				milliseconds = Long.parseLong(br.readLine());
+				br.close();
+			} catch (IOException e){
+				System.out.println("IOException in reading timestamp file!");
+			}
+			return new Date(milliseconds);
+		}
+		return new Date();
+	}
+
 	private static RoomInterface findRoom(String host, String name, int port) {
 		RoomInterface roomI = null;
 		try{
@@ -64,22 +110,34 @@ public class Client{
 	}
 
 	public static void main(String [] args){
-		int port = 1099;
         Console console = System.console();
 		if (console == null) {
 			System.out.println("Couldn't get Console instance");
 			System.exit(0);
 		}
 
-		String host, input="", myname="", passwd="", key="";
-		if (args.length > 0)
-			host = args[0];
-		else
+		ArgParser arg_parser = new ArgParser(args);
+		String host="", myname="", roomname="", passwd="", key="";
+		int port = 0;
+
+		try{
+			host = arg_parser.getHost();
+			myname = arg_parser.getName();
+			roomname = arg_parser.getRoom();
+			port = arg_parser.getPort();
+			//TODO: graphical + port
+		} catch(IllegalArgumentException e){
+			System.out.println(e);
+			System.exit(1);
+		}
+		while (host.equals(""))
 			host = new String(console.readLine("Please enter host name: "));
-		String room_name = new String(console.readLine("Please enter room name: "));
-		if (room_name.equals(""))
-			room_name = "default";
-		RoomInterface roomI = findRoom(host, room_name, port);
+		while (roomname.equals(""))
+			roomname = new String(console.readLine("Please enter room name: "));
+		while (myname.equals(""))
+			myname = new String(console.readLine("Please enter avatar name: "));
+
+		RoomInterface roomI = findRoom(host, roomname, port);
 		Crypto crypto = new Crypto();
 		crypto.generateDHKeyPair();
 		crypto.generateRSAKeyPair();
@@ -89,12 +147,12 @@ public class Client{
 		int status = -1;		//-1: undefined, 0: new user, 1: registered user, 2: online user
 		try{
 			do {
-				myname = new String(console.readLine("Please enter avatar name: "));
 				status = roomI.userStatus(myname);
 				switch (status){
 					case 0:
 						key = new String(console.readLine("Please enter registration key: "));
-						passwd = new String(console.readPassword("Please enter a password for your account: "));
+						passwd = new String(console.readPassword(
+												"Please enter a password for your account: "));
 						pwset = true;
 						if (!roomI.registerClient(myname, key, passwd)){
 							System.out.println("Failed to register User " + myname);
@@ -102,7 +160,7 @@ public class Client{
 						}
 						else{
 							System.out.println("Successfully registered User " + myname);
-						}			//continue with login
+						}			//continue with login -> no break
 					case 1:
 						if (!pwset)
 							passwd = new String(console.readPassword("Password: "));
@@ -125,61 +183,55 @@ public class Client{
 					default:		//should never happen
 						System.out.println("Undefined user status!");
 				}
+				if (!success)
+					myname = new String(console.readLine("Please enter avatar name: "));
 			} while(!success);
 		} catch (RemoteException e){
 			System.out.println("RemoteException in registerClient");
 			System.exit(1);
 		}
 
-		Date date = new Date();
+		Date date = loadDate(roomname, myname);	//TODO: check dates -> test
 
 		//adding ShutdownHook
-		Runtime.getRuntime().addShutdownHook(new ClientShutdownThread(roomI, myname, date));
+		Runtime.getRuntime().addShutdownHook(new ClientShutdownThread(
+											roomI, myname, date, roomname));
 		System.out.println("Shutdown hook added");
 
+		//adding ConsoleRefresher
+		ConsoleRefresher refresher = new ConsoleRefresher(myname, date, roomI, crypto);
+		refresher.start();
+
+		String input = "";
 		Message m = new Message();
-		boolean logged_in = true;
-		while (logged_in){
+		while (true){
 			input = new String(console.readLine());
-			if (!input.equals("")){
-				if (input.charAt(0) == '!'){
-					m = new Message(myname, input.substring(1));
-					m.sign(crypto);			//XXX:or crypto.encrypt(m)?
-					m.encrypt(crypto);		//XXX:only encrypts message+hash, not author+date
-					try{
-						if (input.equals("!logout") || input.equals("!exit"))		//idea: client side command method
-							System.exit(0);											//class variables for myname, etc
-						//System.out.println("DEBUG: injecting command: "+m);
-						m = roomI.injectCommand(m);
-						System.out.println(m);
-					} catch (RemoteException e){
-						System.out.println("RemoteException on injectCommand!\n"+ e);
-						System.exit(1);
-					}
+			if (!input.equals("") && input.charAt(0) == '!'){
+				m = new Message(myname, input.substring(1));
+				m.sign(crypto);			//XXX:or crypto.encrypt(m)?
+				m.encrypt(crypto);		//XXX:only encrypts message+hash, not author+date
+				try{
+					if (input.equals("!logout") || input.equals("!exit"))		//idea: client side command method
+						System.exit(0);											//class variables for myname, etc
+					//System.out.println("DEBUG: injecting command: "+m);
+					m = roomI.injectCommand(m);
+					System.out.println(m);
+				} catch (RemoteException e){
+					System.out.println("RemoteException on injectCommand!\n"+ e);
+					System.exit(1);
 				}
-				else{
-					m = new Message(myname, input);
-					m.sign(crypto);			//XXX:or crypto.encrypt(m)?
-					m.encrypt(crypto);		//XXX:only encrypts message+hash, not author+date
-					try{
-						//System.out.println("DEBUG: submiting message: "+m);
-						roomI.submitMessage(m);
-					} catch (RemoteException e){
-						System.out.println("RemoteException on submitMessage!\n"+ e);
-						System.exit(1);
-					}
-				}
-				input = "";
 			}
-			try{
-				for(Message news : roomI.requestNewMessages(date, myname)){
-					news.decrypt(crypto);
-					System.out.println(news);
-					date = news.getDate();		//set date to newest received message date
+			if (!input.equals("") && input.charAt(0) != '!'){
+				m = new Message(myname, input);
+				m.sign(crypto);			//XXX:or crypto.encrypt(m)?
+				m.encrypt(crypto);		//XXX:only encrypts message+hash, not author+date
+				try{
+					//System.out.println("DEBUG: submiting message: "+m);
+					roomI.submitMessage(m);
+				} catch (RemoteException e){
+					System.out.println("RemoteException on submitMessage!\n"+ e);
+					System.exit(1);
 				}
-			} catch(RemoteException e){
-				System.out.println("RemoteException on requestNewMessages!\n"+ e);
-				System.exit(1);
 			}
 		}
 	}

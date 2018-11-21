@@ -169,6 +169,7 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 			return false;
 		clients.remove(index);
 		client_messages.remove(index);
+		cryptos.remove(index);
 		//TODO: message from system to all?
 		return true;
 	}
