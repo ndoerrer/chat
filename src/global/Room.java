@@ -189,23 +189,32 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 
 	public boolean submitMessage(Message m) throws RemoteException{
 		int index = clients.indexOf(m.getAuthor());
-		if (client_messages.get(index) != null)
+		if (index == -1 || client_messages.get(index) != null)
 			return false;				//user not logged in!
 		else {
+			//System.out.println("DEBUG: encrypted message " + m);
+			m.decrypt(cryptos.get(index));
+			if (!m.verify(cryptos.get(index)))
+				return false;
 			client_messages.set(index, new Message(m));
 			//System.out.println("DEBUG: adding message " + client_messages.get(index));
 			return true;
 		}
 	}
 
-	public Vector<Message> requestNewMessages(Date date) throws RemoteException{
+	public Vector<Message> requestNewMessages(Date date, String name) throws RemoteException{
 		Vector<Message> news = new Vector<Message>();
+		int index = clients.indexOf(name);
+		if (index == -1)
+			return null;
 		Message m;
 		for(int i=messages.size()-1; i>0; i--){
 			m = messages.get(i);
 			//System.out.println("DEBUG: checking message " + i + ": " + m);
-			if (m.getDate().after(date))
+			if (m.getDate().after(date)){
+				m.encrypt(cryptos.get(index));
 				news.add(0, m);
+			}
 			else
 				break;
 		}
@@ -224,6 +233,10 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 	}
 
 	public Message injectCommand(Message m) throws RemoteException{
+		int index = clients.indexOf(m.getAuthor());
+		if (index == -1 || client_messages.get(index) != null)
+			return null;				//user not logged in!
+		m.decrypt(cryptos.get(clients.indexOf(m.getAuthor())));
 		String command = m.getText();
 		switch(command){
 			case "makeonetimekey":

@@ -35,6 +35,28 @@ public class Message implements Serializable{
 		return signed;
 	}
 
+	public boolean verify(Crypto crypto){
+		return crypto.verifySignature(text, signature, crypto.getForeignRSAKey());
+	}
+
+	public boolean encrypt(Crypto crypto){
+		text = crypto.encrypt(text);
+		if (signed)
+			signature = crypto.encrypt(signature);
+		if (text == null || signature == null)
+			return false;
+		return true;
+	}
+
+	public boolean decrypt(Crypto crypto){
+		text = crypto.decrypt(text);
+		if (signed)
+			signature = crypto.decrypt(signature);
+		if (text == null || signature == null)
+			return false;
+		return true;
+	}
+
 	public String getText(){
 		return text;
 	}

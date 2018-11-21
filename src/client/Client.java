@@ -144,6 +144,8 @@ public class Client{
 			if (!input.equals("")){
 				if (input.charAt(0) == '!'){
 					m = new Message(myname, input.substring(1));
+					m.sign(crypto);			//XXX:or crypto.encrypt(m)?
+					m.encrypt(crypto);		//XXX:only encrypts message+hash, not author+date
 					try{
 						if (input.equals("!logout") || input.equals("!exit"))		//idea: client side command method
 							System.exit(0);											//class variables for myname, etc
@@ -157,6 +159,8 @@ public class Client{
 				}
 				else{
 					m = new Message(myname, input);
+					m.sign(crypto);			//XXX:or crypto.encrypt(m)?
+					m.encrypt(crypto);		//XXX:only encrypts message+hash, not author+date
 					try{
 						//System.out.println("DEBUG: submiting message: "+m);
 						roomI.submitMessage(m);
@@ -168,7 +172,8 @@ public class Client{
 				input = "";
 			}
 			try{
-				for(Message news : roomI.requestNewMessages(date)){
+				for(Message news : roomI.requestNewMessages(date, myname)){
+					news.decrypt(crypto);
 					System.out.println(news);
 					date = news.getDate();		//set date to newest received message date
 				}

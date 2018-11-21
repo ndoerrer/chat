@@ -86,7 +86,7 @@ public class Crypto{
 
 	public String encrypt(String text){
 		//byte[] bytes = Base64.getDecoder().decode(text);
-		System.out.println("DEBUG: text length = "+text.length());
+		//System.out.println("DEBUG: text length = "+text.length());
 		try {
 			Key key = new SecretKeySpec(shared_secret, 0, 16, "AES");
 			Cipher c = Cipher.getInstance("AES");
@@ -105,7 +105,7 @@ public class Crypto{
 
 	public String decrypt(String cipher_text){
 		byte[] bytes = Base64.getDecoder().decode(cipher_text);
-		System.out.println("DEBUG: cipher_text length = "+cipher_text.length());
+		//System.out.println("DEBUG: cipher_text length = "+cipher_text.length());
 		try {
 			Key key = new SecretKeySpec(shared_secret, 0, 16, "AES");
 			Cipher c = Cipher.getInstance("AES");
@@ -158,8 +158,8 @@ public class Crypto{
 			Cipher c = Cipher.getInstance("RSA");
 			c.init(Cipher.DECRYPT_MODE, key);
 			hash_from_signature = c.doFinal(bytes);
-			System.out.println("DEBUG: hash_from_text" + new String(hash_from_text));
-			System.out.println("DEBUG: hash_from_signature" + new String(hash_from_signature));
+			//System.out.println("DEBUG: hash_from_text" + new String(hash_from_text));
+			//System.out.println("DEBUG: hash_from_signature" + new String(hash_from_signature));
 			return ((new String(hash_from_text)).equals(new String(hash_from_signature)));
 		} catch (InvalidKeyException e){
 			System.out.println("InvalidKeyException in unsign_cleartext");
