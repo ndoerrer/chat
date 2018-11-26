@@ -163,7 +163,7 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 		return cryptos.get(index).getRSAPublicKey();
 	}
 
-	public boolean logout(String name){		// logout after some idletime?
+	public boolean logout(String name){
 		int index = clients.indexOf(name);
 		if (index == -1)
 			return false;
@@ -270,5 +270,13 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 		for (String user : clients)
 			result += user + "\n";
 		return result.substring(0, result.length()-1);
+	}
+
+	public boolean shutdown(){
+		boolean result = true;
+		for(int i=1; i<clients.size(); i++){		//all users except system
+			result &= logout(clients.get(i));
+		}
+		return result;
 	}
 }

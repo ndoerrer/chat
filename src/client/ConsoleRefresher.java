@@ -4,6 +4,7 @@ import chAT.global.*;
 
 import java.util.Date;
 import java.rmi.RemoteException;
+import java.util.Vector;
 
 public class ConsoleRefresher extends Thread{
 	private Date date;
@@ -24,7 +25,12 @@ public class ConsoleRefresher extends Thread{
 	public void run(){
 		while(true){
 			try{
-				for(Message news : roomI.requestNewMessages(date, myname)){
+				Vector<Message> all_news = roomI.requestNewMessages(date, myname);
+				if (all_news == null && roomI.userStatus(myname) == 1){//TODO: faster userStatus
+					System.out.println("The server is shutting down or you have been kicked!");
+					System.exit(0);
+				}
+				for(Message news : all_news){
 					news.decrypt(crypto);
 					System.out.println(news);
 					if(news.getDate().after(date))

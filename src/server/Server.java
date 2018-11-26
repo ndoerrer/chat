@@ -16,6 +16,31 @@ import java.net.UnknownHostException;
 import java.net.NetworkInterface;
 import java.util.Enumeration;
 
+class ServerShutdownThread extends Thread {
+	private Room room;
+
+	public ServerShutdownThread(Room room_in) {
+		super();
+		room = room_in;
+	}
+
+	public void run() {
+		boolean success = false;
+		success = room.shutdown();
+		if (success)
+			System.out.println("Sent logout to all clients");
+		else
+			System.out.println("Failed to send logout to clients!");
+		try{
+			Thread.sleep(1000);	//exact time?
+		} catch(InterruptedException e){
+			System.out.println("InterruptedException!");
+		}
+		System.out.println("Shutting down server");
+		this.interrupt();
+	}
+}
+
 public class Server{
 	private static void checkInterfaces(){
 		try {
@@ -55,10 +80,16 @@ public class Server{
 	}
 
 	public static void main(String [] args) throws RemoteException{		//TODO: better way??
-		RoomInterface room;
+		Room room;
+		RoomInterface roomI;
 		String room_name = (args.length > 0) ? args[0] : "default";
 		boolean makeonetimekey = Arrays.asList(args).contains("--makeonetimekey");
 		room = new Room(room_name, makeonetimekey);
+		roomI = (RoomInterface) room;
+
+		//adding ShutdownHook
+		Runtime.getRuntime().addShutdownHook(new ServerShutdownThread(room));
+		System.out.println("Shutdown hook added");
 
 		checkInterfaces();
 		String host = "localhost";
@@ -70,11 +101,11 @@ public class Server{
 			System.exit(1);
 		}
 		int port = 1099;
-		offer(room, host, room_name, port);
+		offer(roomI, host, room_name, port);
 		Message m = new Message();
 		while(true){
 			try{
-				room.addMessages();
+				roomI.addMessages();
 			} catch (RemoteException e) {
 				System.out.println("RemoteException in addMessages! [Server]");
 				e.printStackTrace();
