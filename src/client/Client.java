@@ -1,6 +1,7 @@
 package chAT.client;
 
 import chAT.global.*;
+import chAT.gui.*;
 
 import java.rmi.RemoteException;
 import java.rmi.NotBoundException;
@@ -119,13 +120,14 @@ public class Client{
 		ArgParser arg_parser = new ArgParser(args);
 		String host="", myname="", roomname="", passwd="", key="";
 		int port = 0;
+		boolean graphical = false;
 
 		try{
 			host = arg_parser.getHost();
 			myname = arg_parser.getName();
 			roomname = arg_parser.getRoom();
 			port = arg_parser.getPort();
-			//TODO: graphical + port
+			graphical = arg_parser.isGraphical();
 		} catch(IllegalArgumentException e){
 			System.out.println(e);
 			System.exit(1);
@@ -198,39 +200,44 @@ public class Client{
 											roomI, myname, date, roomname));
 		System.out.println("Shutdown hook added");
 
-		//adding ConsoleRefresher
-		ConsoleRefresher refresher = new ConsoleRefresher(myname, date, roomI, crypto);
-		refresher.start();
-
-		String input = "";
-		Message m = new Message();
-		while (true){
-			input = new String(console.readLine());
-			if (!input.equals("") && input.charAt(0) == '!'){
-				m = new Message(myname, input.substring(1));
-				m.sign(crypto);			//XXX:or crypto.encrypt(m)?
-				m.encrypt(crypto);		//XXX:only encrypts message+hash, not author+date
-				try{
-					if (input.equals("!logout") || input.equals("!exit"))		//idea: client side command method
-						System.exit(0);											//class variables for myname, etc
-					//System.out.println("DEBUG: injecting command: "+m);
-					m = roomI.injectCommand(m);
-					System.out.println(m);
-				} catch (RemoteException e){
-					System.out.println("RemoteException on injectCommand!\n"+ e);
-					System.exit(1);
+		Gui gui;
+		if (graphical)
+			gui = new Gui(roomI, myname, crypto);
+		else{
+			//adding ConsoleRefresher
+			ConsoleRefresher refresher = new ConsoleRefresher(myname, date, roomI, crypto);
+			refresher.start();
+	
+			String input = "";
+			Message m = new Message();
+			while (true){
+				input = new String(console.readLine());
+				if (!input.equals("") && input.charAt(0) == '!'){
+					if (input.equals("!logout") || input.equals("!exit")) //idea: client side command method
+						System.exit(0);
+					m = new Message(myname, input.substring(1));
+					m.sign(crypto);			//XXX:or crypto.encrypt(m)? also TextInputListener
+					m.encrypt(crypto);		//XXX:only encrypts message+hash, not author+date
+					try{
+						//System.out.println("DEBUG: injecting command: "+m);
+						m = roomI.injectCommand(m);
+						System.out.println(m);
+					} catch (RemoteException e){
+						System.out.println("RemoteException on injectCommand!\n"+ e);
+						System.exit(1);
+					}
 				}
-			}
-			if (!input.equals("") && input.charAt(0) != '!'){
-				m = new Message(myname, input);
-				m.sign(crypto);			//XXX:or crypto.encrypt(m)?
-				m.encrypt(crypto);		//XXX:only encrypts message+hash, not author+date
-				try{
-					//System.out.println("DEBUG: submiting message: "+m);
-					roomI.submitMessage(m);
-				} catch (RemoteException e){
-					System.out.println("RemoteException on submitMessage!\n"+ e);
-					System.exit(1);
+				if (!input.equals("") && input.charAt(0) != '!'){
+					m = new Message(myname, input);
+					m.sign(crypto);			//XXX:or crypto.encrypt(m)?
+					m.encrypt(crypto);		//XXX:only encrypts message+hash, not author+date
+					try{
+						//System.out.println("DEBUG: submiting message: "+m);
+						roomI.submitMessage(m);
+					} catch (RemoteException e){
+						System.out.println("RemoteException on submitMessage!\n"+ e);
+						System.exit(1);
+					}
 				}
 			}
 		}

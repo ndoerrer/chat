@@ -20,7 +20,6 @@ import java.io.IOException;
 
 import java.security.PublicKey;
 
-//TODO: store/load room -> shutdownhook
 public class Room extends UnicastRemoteObject implements RoomInterface{
 	private final String room_name;
 	private final String room_directory;
@@ -142,18 +141,20 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 			return null;
 
 		clients.add(name);
+		int index = clients.indexOf(name);
 		client_messages.add(null);
+		cryptos.add(new Crypto());
 
 		System.out.println("DEBUG: adding crypto");
-		cryptos.add(new Crypto());
-		cryptos.get(cryptos.size()-1).generateDHKeyPair();
-		cryptos.get(cryptos.size()-1).computeSharedSecret(user_DHkey);
+		cryptos.get(index).generateDHKeyPair();
+		cryptos.get(index).computeSharedSecret(user_DHkey);
 		System.out.println("DEBUG: finished DH");
-		cryptos.get(cryptos.size()-1).generateRSAKeyPair();
-		cryptos.get(cryptos.size()-1).setForeignRSAKey(user_RSAkey);
+		cryptos.get(index).generateRSAKeyPair();
+		cryptos.get(index).setForeignRSAKey(user_RSAkey);
 
+		System.out.println("DEBUG: finished setting up user #"+index);
 		//TODO: message from system to all -> systemTAG boolean for messages?
-		return cryptos.get(cryptos.size()-1).getDHPublicKey();
+		return cryptos.get(index).getDHPublicKey();
 	}
 
 	public PublicKey getRSAPublicKey(String name) throws RemoteException{
@@ -177,7 +178,7 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 	public boolean addMessages() throws RemoteException{//idea: sort client_messages copy by date
 		boolean added = false;
 		Message m;
-		for (int i=0; i<client_messages.size(); i++){	//TODO: what if player leaves/enters
+		for (int i=0; i<client_messages.size(); i++){
 			m = client_messages.get(i);
 			if (m != null){
 				messages.add(new Message(m));
@@ -198,7 +199,7 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 			if (!m.verify(cryptos.get(index)))
 				return false;
 			client_messages.set(index, new Message(m));
-			//System.out.println("DEBUG: adding message " + client_messages.get(index));
+			System.out.println("DEBUG: adding message " + client_messages.get(index));
 			return true;
 		}
 	}
@@ -210,16 +211,19 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 			return null;
 		Message m;
 		for(int i=messages.size()-1; i>0; i--){
-			m = messages.get(i);
+			m = new Message(messages.get(i));
 			//System.out.println("DEBUG: checking message " + i + ": " + m);
 			if (m.getDate().after(date)){
+				//TODO sign messages
 				m.encrypt(cryptos.get(index));
 				news.add(0, m);
 			}
 			else
 				break;
 		}
-		//System.out.println("DEBUG: adding news of lenght " + news.size());
+		/*DEBUG
+		if (news.size() > 0)
+			System.out.println("DEBUG: sending " + news.get(0).getText() + " to " + name);*/
 		return news;
 	}
 

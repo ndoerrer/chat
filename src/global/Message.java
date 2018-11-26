@@ -24,6 +24,7 @@ public class Message implements Serializable{
 
 	public Message(Message m){
 		this(m.getAuthor(), m.getText());
+		date = m.getDate();
 		signed = m.isSigned();
 		signature = m.getSignature();
 	}

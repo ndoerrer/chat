@@ -32,7 +32,7 @@ class ServerShutdownThread extends Thread {
 		else
 			System.out.println("Failed to send logout to clients!");
 		try{
-			Thread.sleep(1000);	//exact time?
+			Thread.sleep(1500);
 		} catch(InterruptedException e){
 			System.out.println("InterruptedException!");
 		}
