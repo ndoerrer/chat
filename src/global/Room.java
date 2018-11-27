@@ -79,6 +79,7 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 	}	//-1: undefined, 0: new user, 1: registered user, 2: online user
 
 	public boolean registerClient(String name, String key, String passwd) throws RemoteException{
+		System.out.println("DEBUG: registering client: "+name);
 		if (userStatus(name) != 0)
 			return false;
 		if (!key.equals(one_time_key))
