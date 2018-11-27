@@ -11,6 +11,7 @@ import java.rmi.Naming;
 import java.net.MalformedURLException;
 
 import java.net.InetAddress;
+import java.net.Inet4Address;
 import java.net.UnknownHostException;
 
 import java.net.NetworkInterface;
@@ -42,19 +43,25 @@ class ServerShutdownThread extends Thread {
 }
 
 public class Server{
-	private static void checkInterfaces(){
+	private static InetAddress checkInterfaces(){
 		try {
 			final Enumeration<NetworkInterface> netifs = NetworkInterface.getNetworkInterfaces();
 	        while (netifs.hasMoreElements()){
 				NetworkInterface netif = netifs.nextElement();
 				Enumeration<InetAddress> i = netif.getInetAddresses();
-				while (i.hasMoreElements())
-					System.out.println(netif.getName()+": "+ i.nextElement().getHostAddress());
+				while (i.hasMoreElements()){
+					InetAddress ia = i.nextElement();
+					System.out.println(netif.getName()+": "+ ia.getHostAddress());
+					if (!ia.isLinkLocalAddress() && !ia.isLoopbackAddress() &&
+																ia instanceof Inet4Address)
+						return ia;
+				}
 			}
 	    } catch (Exception e) {
 	        System.out.println("Exception in getNetworkInterfaces");
 			System.exit(1);
 	    }
+		return null;
 	}
 
 	public static void offer(RoomInterface r, String host, String name, int port){
@@ -91,15 +98,15 @@ public class Server{
 		Runtime.getRuntime().addShutdownHook(new ServerShutdownThread(room));
 		System.out.println("Shutdown hook added");
 
-		checkInterfaces();
-		String host = "localhost";
+		String host = checkInterfaces().getHostAddress();
+		/*String host = "localhost";
 		try{
 			InetAddress ip = InetAddress.getLocalHost();
 			host = ip.getHostAddress();
 		} catch (UnknownHostException e){
 			System.out.println("UnknownHostExpection in getLocalHost");
 			System.exit(1);
-		}
+		}*/
 		int port = 1099;
 		offer(roomI, host, room_name, port);
 		Message m = new Message();
