@@ -199,7 +199,7 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 			if (!m.verify(cryptos.get(index)))
 				return false;
 			client_messages.set(index, new Message(m));
-			System.out.println("DEBUG: adding message " + client_messages.get(index));
+			//System.out.println("DEBUG: adding message " + client_messages.get(index));
 			return true;
 		}
 	}

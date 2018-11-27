@@ -28,7 +28,7 @@ public class Gui{
 		m_space = new JPanel();
 		m_space.setLayout(new BoxLayout(m_space, BoxLayout.Y_AXIS));		//typical java shit...
 		m_panel = new MessagePanel(m_space, roomI, myname, crypto);
-		m_panel.setPreferredSize(new Dimension(800, 760));	//TODO: improve
+		m_panel.setPreferredSize(new Dimension(800, 730));	//TODO: improve
 
 		input_field = new JTextField();
 		input_field.addActionListener(new TextInputListener(input_field, roomI, myname, crypto));
