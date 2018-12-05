@@ -189,7 +189,7 @@ public class Client{
 					myname = new String(console.readLine("Please enter avatar name: "));
 			} while(!success);
 		} catch (RemoteException e){
-			System.out.println("RemoteException in registerClient");
+			System.out.println("RemoteException in registerClient or login or userStatus" + e);
 			System.exit(1);
 		}
 

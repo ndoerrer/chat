@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.security.PublicKey;
 
 public class Room extends UnicastRemoteObject implements RoomInterface{
+	private static final int DEFAULT_PORT = 1100;
 	private final String room_name;
 	private final String room_directory;
 	private Vector<Message> messages;
@@ -32,7 +33,8 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 	private final String hash_algorithm = "SHA-256";
 	private Vector<Crypto> cryptos;
 
-	public Room(String roomname_input) throws RemoteException{
+	public Room(String roomname_input, int port) throws RemoteException{
+		super(port);
 		room_name = roomname_input;
 		room_directory = "../data/" + room_name + "/";
 		messages = new Vector<Message>();
@@ -53,6 +55,10 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 		}
 		cryptos = new Vector<Crypto>();
 		cryptos.add(null);				//for system
+	}
+
+	public Room(String roomname_input) throws RemoteException{
+		this(roomname_input, DEFAULT_PORT);
 	}
 
 	public Room(String roomname_input, boolean makeOneTimeKey) throws RemoteException{
