@@ -141,9 +141,11 @@ public class Client{
 
 		RoomInterface roomI = findRoom(host, roomname, port);
 		Crypto crypto = new Crypto();
+		System.out.println("DEBUG: creating Crypto Keys...");
 		crypto.generateDHKeyPair();
 		crypto.generateRSAKeyPair();
 		PublicKey room_RSA_public_key, room_DH_public_key;
+		System.out.println("DEBUG: ... done");
 
 		boolean pwset = false, success = false;
 		int status = -1;		//-1: undefined, 0: new user, 1: registered user, 2: online user

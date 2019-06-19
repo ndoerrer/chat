@@ -46,34 +46,40 @@ class ServerShutdownThread extends Thread {
 public class Server{
 	private static String checkInterfaces(){
 		String host="";
+		boolean local = true;
+		boolean loopback = true;
 		try {
 			final Enumeration<NetworkInterface> netifs = NetworkInterface.getNetworkInterfaces();
 	        while (netifs.hasMoreElements()){
 				NetworkInterface netif = netifs.nextElement();
 				System.out.println("checking interface " + netif.getName());
-				if (netif.isLoopback() && netifs.hasMoreElements())
-					continue;	//avoid loopback interfaces if others are present
+				//if (netif.isLoopback() && netifs.hasMoreElements())
+				//	continue;	//avoid loopback interfaces if others are present
 				Enumeration<InetAddress> i = netif.getInetAddresses();
 				while (i.hasMoreElements()){
 					InetAddress ia = i.nextElement();
 					System.out.println("\tfound address: "+ ia.getHostAddress());
-					//if (ia instanceof Inet4Address)
-					//	return ia.getHostAddress();
-					if (ia instanceof Inet6Address)
-						host = ia.getHostAddress();
-						int percent_index = host.indexOf("%");
-						host = host.substring(0, percent_index);
-						return "["+host+"]";	//enclose by [] needed for rmi rebind
-					//if (!ia.isLinkLocalAddress() && !ia.isLoopbackAddress() &&
-					//											ia instanceof Inet4Address)
-					//	return ia.getHostAddress();
+					System.out.println("\t\tlinklocal: "+ ia.isLinkLocalAddress());
+					System.out.println("\t\tloopback: "+ ia.isLoopbackAddress());
+					if (ia instanceof Inet6Address){
+						if((!ia.isLinkLocalAddress() && local && loopback) || (!ia.isLoopbackAddress() && loopback)){
+							host = ia.getHostAddress();
+							int percent_index = host.indexOf("%");
+							host = "["+host.substring(0, percent_index)+"]";
+							if (!ia.isLinkLocalAddress())
+								local = false;
+							if (!ia.isLoopbackAddress())
+								loopback = false;
+						}
+					}
 				}
 			}
 	    } catch (Exception e) {
 	        System.out.println("Exception in getNetworkInterfaces");
 			System.exit(1);
 	    }
-		return "";
+		System.out.println("could only find linklocal or loopback addresses");
+		return host;
 	}
 
 	public static void offer(RoomInterface r, String host, String name, int port){
