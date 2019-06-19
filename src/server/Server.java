@@ -46,30 +46,33 @@ class ServerShutdownThread extends Thread {
 public class Server{
 	private static String checkInterfaces(){
 		String host="";
-		boolean local = true;
 		boolean loopback = true;
+		boolean renew = false;
 		try {
 			final Enumeration<NetworkInterface> netifs = NetworkInterface.getNetworkInterfaces();
 	        while (netifs.hasMoreElements()){
 				NetworkInterface netif = netifs.nextElement();
 				System.out.println("checking interface " + netif.getName());
-				//if (netif.isLoopback() && netifs.hasMoreElements())
-				//	continue;	//avoid loopback interfaces if others are present
 				Enumeration<InetAddress> i = netif.getInetAddresses();
 				while (i.hasMoreElements()){
 					InetAddress ia = i.nextElement();
 					System.out.println("\tfound address: "+ ia.getHostAddress());
 					System.out.println("\t\tlinklocal: "+ ia.isLinkLocalAddress());
 					System.out.println("\t\tloopback: "+ ia.isLoopbackAddress());
-					if (ia instanceof Inet6Address){
-						if((!ia.isLinkLocalAddress() && local && loopback) || (!ia.isLoopbackAddress() && loopback)){
+					if (ia instanceof Inet6Address){ //local loopback < (nonlocal loopback) < local nonloopback < nonlocal nonloopback
+						if (host.equals(""))
+							renew = true;
+						if (!ia.isLoopbackAddress() && loopback)
+							renew = true;
+						if (!ia.isLinkLocalAddress() && !ia.isLoopbackAddress())
+							renew = true;
+						if(renew){
 							host = ia.getHostAddress();
 							int percent_index = host.indexOf("%");
 							host = "["+host.substring(0, percent_index)+"]";
-							if (!ia.isLinkLocalAddress())
-								local = false;
 							if (!ia.isLoopbackAddress())
 								loopback = false;
+							renew = false;
 						}
 					}
 				}
