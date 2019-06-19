@@ -8,6 +8,8 @@ import javax.swing.JFrame;
 import java.awt.BorderLayout;
 import javax.swing.BoxLayout;
 import java.awt.Dimension;
+import java.awt.Toolkit;
+import java.awt.Font;
 
 public class Gui{
 	JPanel content_pane;
@@ -24,18 +26,28 @@ public class Gui{
 		roomI = roomI_in;
 		myname = myname_in;
 		crypto = crypto_in;
+		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+		Font myFont = new Font("Serif", Font.PLAIN, 12);
+		if (screenSize.getWidth() > 1500)
+			myFont = new Font("Serif", Font.PLAIN, 24);
+		if (screenSize.getWidth() > 3000)
+			myFont = new Font("Serif", Font.PLAIN, 36);
 
 		m_space = new JPanel();
 		m_space.setLayout(new BoxLayout(m_space, BoxLayout.Y_AXIS));		//typical java shit...
-		m_panel = new MessagePanel(m_space, roomI, myname, crypto);
-		m_panel.setPreferredSize(new Dimension(800, 730));	//TODO: improve
+		m_panel = new MessagePanel(m_space, roomI, myname, crypto, myFont);
+		m_panel.setPreferredSize(screenSize);
+		m_panel.setFont(myFont);
 
 		input_field = new JTextField();
+		input_field.setFont(myFont);
 		input_field.addActionListener(new TextInputListener(input_field, roomI, myname, crypto));
 
-		content_pane = new JPanel(new BorderLayout());
-		content_pane.add(m_panel, BorderLayout.NORTH);
-		content_pane.add(input_field, BorderLayout.SOUTH);
+		content_pane = new JPanel();
+		content_pane.setLayout(new BoxLayout(content_pane, BoxLayout.Y_AXIS));		//typical java shit...
+
+		content_pane.add(m_panel);
+		content_pane.add(input_field);
 		
 
 		frame = new JFrame("chAT gui");

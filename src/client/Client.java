@@ -33,7 +33,7 @@ class ClientShutdownThread extends Thread {
 		myname = myname_in;
 		date = date_in;
 		roomname = roomname_in;
-	}
+	}	//TODO: DNS retranslation?
 
 	private void storeTimestamp(){
 		String timestamp_file = "../data/" + roomname + "/" + myname + ".time";

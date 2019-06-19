@@ -9,6 +9,7 @@ import javax.swing.JLabel;
 import javax.swing.Timer;
 import javax.swing.JScrollBar;
 import javax.swing.SwingUtilities;
+import java.awt.Font;
 
 import java.awt.Color;
 import java.util.Date;
@@ -22,10 +23,12 @@ public class MessagePanel extends JScrollPane{
 	private MessageCollector m_collector;
 	private JPanel content;
 	private JScrollBar scrollbar;
+	private Font myFont;
 
 	public MessagePanel(JPanel content_in, RoomInterface roomI_in, String myname_in,
-											Crypto crypto_in, int delay_in){
+											Crypto crypto_in, Font font_in, int delay_in){
 		super(content_in);
+		myFont = font_in;
 		content = content_in;
 		setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 		scrollbar = getVerticalScrollBar();
@@ -38,13 +41,14 @@ public class MessagePanel extends JScrollPane{
 	}
 
 	public MessagePanel(JPanel content_in, RoomInterface roomI_in, String myname_in,
-											Crypto crypto_in){
-		this(content_in, roomI_in, myname_in, crypto_in, DEFAULT_DELAY);
+											Crypto crypto_in, Font font_in){
+		this(content_in, roomI_in, myname_in, crypto_in, font_in, DEFAULT_DELAY);
 	}
 
 	protected void addMessage(Message m){
 		m.decrypt(crypto);
 		JLabel label = new JLabel(m.toString());
+		label.setFont(myFont);
 		if (m.getAuthor().equals(myname))
 			label.setBackground(new Color(51,204,255));
 		else
