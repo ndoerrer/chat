@@ -93,8 +93,8 @@ public class Client{
 	private static RoomInterface findRoom(String host, String name, int port) {
 		RoomInterface roomI = null;
 		try{
-			Object o = Naming.lookup("rmi://" + host + ":" + port + "/" + name);
 			System.out.println("Requesting Object rmi://" + host + ":" + port + "/" + name);
+			Object o = Naming.lookup("rmi://" + host + ":" + port + "/" + name);
 			roomI = (RoomInterface) o;
 			System.out.println ("RoomInterface (" + name + ") found");
 		} catch (NotBoundException e) {
@@ -141,17 +141,19 @@ public class Client{
 
 		RoomInterface roomI = findRoom(host, roomname, port);
 		Crypto crypto = new Crypto();
-		System.out.println("DEBUG: creating Crypto Keys...");
+		System.out.print("DEBUG: creating Crypto Keys...");
 		crypto.generateDHKeyPair();
 		crypto.generateRSAKeyPair();
 		PublicKey room_RSA_public_key, room_DH_public_key;
-		System.out.println("DEBUG: ... done");
+		System.out.println(" done");
 
 		boolean pwset = false, success = false;
 		int status = -1;		//-1: undefined, 0: new user, 1: registered user, 2: online user
 		try{
 			do {
+				System.out.print("DEBUG: checking user status...");
 				status = roomI.userStatus(myname);
+				System.out.println(" done");
 				switch (status){
 					case 0:
 						key = new String(console.readLine("Please enter registration key: "));

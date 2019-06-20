@@ -68,6 +68,7 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 	}
 
 	public int userStatus(String name) throws RemoteException{
+		System.out.println("DEBUG: trying to get status of "+ name);
 		if (clients.indexOf(name) != -1)
 			return 2;
 		boolean found = false;
@@ -171,7 +172,7 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 		return cryptos.get(index).getRSAPublicKey();
 	}
 
-	public boolean logout(String name){
+	public boolean logout(String name) throws RemoteException{
 		int index = clients.indexOf(name);
 		if (index == -1)
 			return false;
@@ -283,7 +284,7 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 		return result.substring(0, result.length()-1);
 	}
 
-	public boolean shutdown(){
+	public boolean shutdown() throws RemoteException{
 		boolean result = true;
 		for(int i=1; i<clients.size(); i++){		//all users except system
 			result &= logout(clients.get(i));

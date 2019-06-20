@@ -3,6 +3,7 @@ package chAT.gui;
 import chAT.global.*;
 
 import javax.swing.JPanel;
+import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.JLabel;
@@ -53,10 +54,15 @@ public class MessagePanel extends JScrollPane{
 			label.setBackground(new Color(51,204,255));
 		else
 			label.setBackground(new Color(102,255,102));
-		label.setOpaque(true);
+		label.setOpaque(true);	//to also point background
 		//System.out.println("DEBUG: adding label " + m.toString());
 		content.add(label);
 		content.revalidate();
+
+		//JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(this);//new
+		//topFrame.revalidate();//new
+
+		//content.repaint();	//TODO: doesnt work for gui+console communication?
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {	scrollbar.setValue( scrollbar.getMaximum() ); }
 		});			//seriously, java?

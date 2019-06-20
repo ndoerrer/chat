@@ -28,13 +28,17 @@ class ServerShutdownThread extends Thread {
 
 	public void run() {
 		boolean success = false;
-		success = room.shutdown();
+		try {
+			success = room.shutdown();
+		} catch(RemoteException e){
+			System.out.println("RemoteException in server shutdown");
+		}
 		if (success)
 			System.out.println("Sent logout to all clients");
 		else
 			System.out.println("Failed to send logout to clients!");
 		try{
-			Thread.sleep(1500);
+			Thread.sleep(2000);
 		} catch(InterruptedException e){
 			System.out.println("InterruptedException!");
 		}
