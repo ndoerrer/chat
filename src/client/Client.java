@@ -11,6 +11,11 @@ import java.net.MalformedURLException;
 import java.util.Date;
 import java.io.Console;
 
+import java.net.InetAddress;
+import java.net.Inet4Address;
+import java.net.Inet6Address;
+import java.net.UnknownHostException;
+
 import java.security.PublicKey;
 
 import java.io.BufferedWriter;
@@ -33,7 +38,7 @@ class ClientShutdownThread extends Thread {
 		myname = myname_in;
 		date = date_in;
 		roomname = roomname_in;
-	}	//TODO: DNS retranslation?
+	}
 
 	private void storeTimestamp(){
 		String timestamp_file = "../data/" + roomname + "/" + myname + ".time";
@@ -139,9 +144,29 @@ public class Client{
 		while (myname.equals(""))
 			myname = new String(console.readLine("Please enter avatar name: "));
 
+		if (host.matches("^.*[a-zA-Z]+\\.[a-zA-Z]+.*$")){//DNS retranslation
+			try{
+				InetAddress[] addresses = InetAddress.getAllByName(host);
+				boolean ipv6 = false;
+				for (InetAddress a : addresses){
+					if (!ipv6){
+						host = a.getHostAddress();
+						System.out.println("resolving hostname via DNS to address = " + host);
+						if (a instanceof Inet6Address)
+							ipv6 = true;
+					}
+				}
+				if (ipv6)
+					host = "[" + host + "]";
+			} catch (UnknownHostException e){
+				System.out.println("Error: Invalid host name entered.");
+				System.exit(1);
+			}
+		}
+
 		RoomInterface roomI = findRoom(host, roomname, port);
 		Crypto crypto = new Crypto();
-		System.out.print("DEBUG: creating Crypto Keys...");
+		System.out.print("Creating Crypto keys...");
 		crypto.generateDHKeyPair();
 		crypto.generateRSAKeyPair();
 		PublicKey room_RSA_public_key, room_DH_public_key;
