@@ -52,8 +52,12 @@ public class MessagePanel extends JScrollPane{
 		label.setFont(myFont);
 		if (m.getAuthor().equals(myname))
 			label.setBackground(new Color(51,204,255));
-		else
-			label.setBackground(new Color(102,255,102));
+		else{
+			if (m.getAuthor().equals("system"))
+				label.setBackground(new Color(255,51,51));
+			else
+				label.setBackground(new Color(102,255,102));
+		}
 		label.setOpaque(true);	//to also point background
 		//System.out.println("DEBUG: adding label " + m.toString());
 		content.add(label);

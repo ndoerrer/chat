@@ -13,14 +13,16 @@ public class TextInputListener implements ActionListener{
 	String myname;
 	Crypto crypto;
 	JTextField input_field;
+	MessagePanel m_panel;
 
 	public TextInputListener(JTextField input_field_in, RoomInterface roomI_in,
-											String myname_in, Crypto crypto_in){
+									String myname_in, Crypto crypto_in, MessagePanel m_panel_in){
 		super();
 		roomI = roomI_in;
 		myname = myname_in;
 		crypto = crypto_in;
 		input_field = input_field_in;
+		m_panel = m_panel_in;
 	}
 
 	public void actionPerformed(ActionEvent evt) {
@@ -31,12 +33,12 @@ public class TextInputListener implements ActionListener{
 			if (text.equals("!logout") || text.equals("!exit"))	//idea: client side command method
 				System.exit(0);	
 			m = new Message(myname, text.substring(1));
+			System.out.println("DEBUG: injecting command: "+m);
 			m.sign(crypto);
 			m.encrypt(crypto);
 			try{
-				//System.out.println("DEBUG: injecting command: "+m);
 				m = roomI.injectCommand(m);
-				System.out.println(m);		//TODO: send to MessagePanel!
+				m_panel.addMessage(m);
 			} catch (RemoteException e){
 				System.out.println("RemoteException on injectCommand!\n"+ e);
 				System.exit(1);

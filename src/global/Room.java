@@ -31,6 +31,7 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 	private String one_time_key = null;						//not preserved on server shutdown!!
 	private final String client_file;
 	private final String hash_algorithm = "SHA-256";
+	private final int saltlength = 16;
 	private Vector<Crypto> cryptos;
 
 	public Room(String roomname_input, int port) throws RemoteException{
@@ -91,20 +92,35 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 			return false;
 		if (!key.equals(one_time_key))
 			return false;							//key is incorrect!			-> false
-		byte [] bytes = new byte[1];				//size of the SHA256 hash is 32
+
+		SecureRandom srand = new SecureRandom();
+		byte [] pwbytes = passwd.getBytes(StandardCharsets.UTF_8);
+		byte [] saltbytes = new byte[saltlength];
+		byte [] bytes = new byte[pwbytes.length+saltlength];			//size of the SHA256 hash is 32
+		srand.nextBytes(saltbytes);
+		for (int i=0; i<bytes.length; i++){
+			if (i < pwbytes.length)
+				bytes[i] = pwbytes[i];
+			else
+				bytes[i] = saltbytes[i - pwbytes.length];
+		}
+		//concatenate passwordbytes and salt
 		try{
 			MessageDigest digest = MessageDigest.getInstance(hash_algorithm);
-			bytes = digest.digest(passwd.getBytes(StandardCharsets.UTF_8));
+			bytes = digest.digest(bytes);
 		} catch (NoSuchAlgorithmException e){
 			return false;
 		}
 		String hash = "";
-        for (byte b : bytes) 
+		String salt = "";
+        for (byte b : bytes)
             hash += String.format("%02x", b);		//conversion to hex
+        for (byte b : saltbytes)
+            salt += String.format("%02x", b);		//conversion to hex
 		//System.out.println("DEBUG: pw hash = "+hash);
 		try{
 			BufferedWriter bw = new BufferedWriter(new FileWriter(client_file, true));
-			bw.append(name+"\t"+hash+"\n");
+			bw.append(name+"\t"+salt+"\t"+hash+"\n");
 			bw.close();
 		} catch (IOException e) {
 			System.out.println("IOException in writing client_file!");
@@ -115,14 +131,15 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 
 	public PublicKey login(String name, String passwd,
 								PublicKey user_DHkey, PublicKey user_RSAkey){
-		String stored_hash = "", computed_hash = "";
+		String stored_hash = "", computed_hash = "", salt = "";
 		BufferedReader br;
 		try{
 			br = new BufferedReader(new FileReader(client_file));
 			String line;
 			while ((line = br.readLine()) != null){
 				if( !(line.indexOf(name) == -1) ){
-					stored_hash = line.split("\t")[1];
+					salt = line.split("\t")[1];
+					stored_hash = line.split("\t")[2];
 					break;
 				}
 			}
@@ -131,13 +148,24 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 			System.out.println("IOException in reading client_file!");
 			return null;
 		}
-
+		byte [] pwbytes = passwd.getBytes(StandardCharsets.UTF_8);
+		byte [] saltbytes = new byte[saltlength];
+		byte [] bytes = new byte[pwbytes.length+saltlength];			//size of the SHA256 hash is 32
+		SecureRandom srand = new SecureRandom();
+		srand.nextBytes(saltbytes);
+		for (int i=0; i<bytes.length; i++){
+			if (i < pwbytes.length)
+				bytes[i] = pwbytes[i];
+			else{
+      			int v = Integer.parseInt(salt.substring(2*(i-pwbytes.length), 2*(i-pwbytes.length+1)), 16);
+      			bytes[i] = (byte) v;
+			}
+		}
 		System.out.println("DEBUG: client file read");
-		byte [] bytes = new byte[1];					//size of the SHA256 hash is 32
 		try{
 			MessageDigest digest = MessageDigest.getInstance(hash_algorithm);
-			bytes = new byte[digest.getDigestLength()];	//size of the SHA256 hash
-			bytes = digest.digest(passwd.getBytes(StandardCharsets.UTF_8));
+			//bytes = new byte[digest.getDigestLength()];	//size of the SHA256 hash
+			bytes = digest.digest(bytes);
 		} catch (NoSuchAlgorithmException e){
 			return null;
 		}
@@ -251,23 +279,29 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 			return null;				//user not logged in!
 		m.decrypt(cryptos.get(clients.indexOf(m.getAuthor())));
 		String command = m.getText();
+		Message reply;
 		switch(command){
 			case "makeonetimekey":
 			case "makeOneTimeKey":
 				System.out.println("oneTimeKey generation called by " + m.getAuthor());
-				return new Message("system", "new oneTimeKey: " + makeOneTimeKey());
+				reply = new Message("system", "new oneTimeKey: " + makeOneTimeKey());
+				break;
 			case "help":
-				return new Message("system", printHelp());
+				reply = new Message("system", printHelp());
+				break;
 			case "userlist":
 			case "listusers":
 			case "listUsers":
-				return new Message("system", printUserList());
+				reply = new Message("system", printUserList());
 			/*case "logout":			//should be only initiated by asynchronous logout
 				logout(m.getAuthor());
 				return new Message("system", "logged out user " + m.getAuthor());*/
+				break;
 			default:
-				return new Message("system", "invalid command: !" + command + "\ttry !help");
+				reply = new Message("system", "invalid command: !" + command + ", try !help");
 		}
+		reply.encrypt(cryptos.get(index));		//TODO: sign
+		return reply;
 	}
 
 	public String printHelp() throws RemoteException{
@@ -280,8 +314,8 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 	public String printUserList() throws RemoteException{
 		String result = "";
 		for (String user : clients)
-			result += user + "\n";
-		return result.substring(0, result.length()-1);
+			result += user + ", ";
+		return result.substring(0, result.length()-2);
 	}
 
 	public boolean shutdown() throws RemoteException{

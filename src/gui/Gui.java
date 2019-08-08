@@ -41,7 +41,7 @@ public class Gui{
 
 		input_field = new JTextField();
 		input_field.setFont(myFont);
-		input_field.addActionListener(new TextInputListener(input_field, roomI, myname, crypto));
+		input_field.addActionListener(new TextInputListener(input_field, roomI, myname, crypto, m_panel));
 
 		content_pane = new JPanel();
 		content_pane.setLayout(new BoxLayout(content_pane, BoxLayout.Y_AXIS));		//typical java shit...
