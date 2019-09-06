@@ -1,0 +1,8 @@
+ - labels longer than the line (client side?)
+ - some messages not shown? resize window is temporary fix???
+ - compact date format
+ - testing on svenjas Macbook? Majas windows? Mo?
+ - better gui design?
+ - load date and recover lost messages
+ - on windows: IOException writing timestamp file -> permissions?
+ - shutdown server -> exception at users? logout faulty?
