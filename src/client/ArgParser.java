@@ -1,20 +1,23 @@
 package chAT.client;
 
+/** ArgParser class
+*	This class represents an command line argument parser for the chat client.
+*	It can extract hostname, clientname, port, roomname and whether or not
+*	to run a graphical user interface.
+*/
 public class ArgParser{
-	String hostname;
-	String myname;
-	String roomname;
-	boolean graphical;
-	int port;
+	String hostname;	// url of the host (enclosed in [] for ipv6)
+	String myname;		// nickname of the client when connecting
+	String roomname;	// name of the room to connect to
+	boolean graphical;	// if true, client runs a gui
+	int port;			// port to reach hosts rmi-registry under
 
-	public void setDefaults(){
-		hostname = "";			//"127.0.0.1";
-		myname = "";			//"dummy";
-		roomname = "default";	//"default";
-		graphical = false;
-		port = 1099;
-	}
-
+	/**	ArgParser Constructor
+	*	This constructor takes the command line parameter array of strings
+	*	as arguments. It extracts the parameters to parse and extracts them.
+	*	@param args: array of strings as command line parameters.
+	*	@throws Illegal ArgumentException: if an argument is not parsable.
+	*/
 	public ArgParser(String [] args) throws IllegalArgumentException{
 		setDefaults();
 		for(int i=0; i<args.length; i++){
@@ -54,22 +57,54 @@ public class ArgParser{
 		}
 	}
 
+	/**	setDefaults method
+	*	This method sets default values to set paramters not specified
+	*	in command line arguments.
+	*/
+	public void setDefaults(){
+		hostname = "";			//"127.0.0.1";
+		myname = "";			//"dummy";
+		roomname = "default";	//"default";
+		graphical = false;
+		port = 1099;
+	}
+
+	/**	getHost method
+	*	This method is a getter for the hostname variable.
+	*	@returns hostname extracted from the args.
+	*/
 	public String getHost(){
 		return hostname;
 	}
 
+	/**	getName method
+	*	This method is a getter for the myname variable.
+	*	@returns myname extracted from the args.
+	*/
 	public String getName(){
 		return myname;
 	}
 
+	/**	getRoom method
+	*	This method is a getter for the roomname variable.
+	*	@returns roomname extracted from the args.
+	*/
 	public String getRoom(){
 		return roomname;
 	}
 
+	/**	isGraphical method
+	*	This method is a getter for the graphical variable.
+	*	@returns graphical extracted from the args.
+	*/
 	public boolean isGraphical(){
 		return graphical;
 	}
 
+	/**	getPort method
+	*	This method is a getter for the port variable.
+	*	@returns port extracted from the args.
+	*/
 	public int getPort(){
 		return port;
 	}

@@ -20,6 +20,10 @@ import java.io.IOException;
 
 import java.security.PublicKey;
 
+/**	Room class
+*	This class handles all Room functionality. It extends UnicastRemoteObject
+*	to be sendable via rmi.
+*/
 public class Room extends UnicastRemoteObject implements RoomInterface{
 	private static final int DEFAULT_PORT = 1100;
 	private final String room_name;
@@ -28,12 +32,19 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 	private Vector<String> clients;
 	private Vector<Message> client_messages;
 
-	private String one_time_key = null;						//not preserved on server shutdown!!
+	private String one_time_key = null;		//not preserved on server shutdown!!
 	private final String client_file;
 	private final String hash_algorithm = "SHA-256";
 	private final int saltlength = 16;
 	private Vector<Crypto> cryptos;
 
+	/**	Room constructor
+	*	This constructor creates a Room instance with given name and for
+	*	given port. The room is Initialized with System client and crypto.
+	*	@param roomname_input: name of the room to create.
+	*	@param port: port to call UnicastRemoteObject with.
+	*	@throws RemoteException: if UnicastRemoveObject can be created.
+	*/
 	public Room(String roomname_input, int port) throws RemoteException{
 		super(port);
 		room_name = roomname_input;
@@ -58,16 +69,37 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 		cryptos.add(null);				//for system
 	}
 
+	/**	Room constructor
+	*	This constructor creates a Room instance with given name.
+	*	The room is Initialized with System client and crypto.
+	*	@param roomname_input: name of the room to create.
+	*	@throws RemoteException: if UnicastRemoveObject can be created.
+	*/
 	public Room(String roomname_input) throws RemoteException{
 		this(roomname_input, DEFAULT_PORT);
 	}
 
+	/**	Room constructor with makeOneTimeKey flag
+	*	This constructor creates a Room instance with given name.
+	*	If makeOneTimeKey is true, a single use key for client registration
+	*	is created. The room is Initialized with System client and crypto.
+	*	@param roomname_input: name of the room to create.
+	*	@param makeOneTimeKey: if true, a key is created.
+	*	@throws RemoteException: if UnicastRemoveObject can be created.
+	*/
 	public Room(String roomname_input, boolean makeOneTimeKey) throws RemoteException{
 		this(roomname_input);
 		if (makeOneTimeKey)
 			System.out.println("Generating one_time_key " + makeOneTimeKey());
 	}
 
+	/**	userStatus method
+	*	This method returns the status of given Client.
+	*	-1: undefined, 0: unregistered, 1: registered, 2: online
+	*	@param name: name of the Client to check status of.
+	*	@throws RemoteException: if connection breaks.
+	*	@returns status code of the Client
+	*/
 	public int userStatus(String name) throws RemoteException{
 		System.out.println("DEBUG: trying to get status of "+ name);
 		if (clients.indexOf(name) != -1)
@@ -86,6 +118,15 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 		return (found ? 1 : 0);
 	}	//-1: undefined, 0: new user, 1: registered user, 2: online user
 
+	/**	registerClient method
+	*	This method returns the status of given Client.
+	*	-1: undefined, 0: unregistered, 1: registered, 2: online
+	*	@param name: name of the Client to register.
+	*	@param key: oneTimeKey to use for registration.
+	*	@param passwd: password for user (only salted hash is saved).
+	*	@throws RemoteException: if connection breaks.
+	*	@returns true, if registration was successfull
+	*/
 	public boolean registerClient(String name, String key, String passwd) throws RemoteException{
 		System.out.println("DEBUG: registering client: "+name);
 		if (userStatus(name) != 0)
@@ -129,6 +170,16 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 		return true;								//successfully added client	-> true
 	}
 
+	/**	login method
+	*	This method attempts a login of given user with given password.
+	*	TODO: move password hashing to Client (also in register).
+	*	@param name: name of the Client to login.
+	*	@param passwd: password for user.
+	*	@param user_DHkey: public DH Key of the user (to verify signatures)
+	*	@param user_RSAkey: public RSA Key of the user (to compute symmetric key)
+	*	@throws RemoteException: if connection breaks.
+	*	@returns true, if registration was successfull
+	*/
 	public PublicKey login(String name, String passwd,
 								PublicKey user_DHkey, PublicKey user_RSAkey){
 		String stored_hash = "", computed_hash = "", salt = "";
@@ -193,6 +244,13 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 		return cryptos.get(index).getDHPublicKey();
 	}
 
+	/**	getRSAPublicKey method
+	*	This method returns the public RSA key of given user.
+	*	It can be used to verify signatures of given user.
+	*	@param name: name of user to get public RSA Key from.
+	*	@throws RemoteException: if connection breaks.
+	*	@returns public RSA key of given user
+	*/
 	public PublicKey getRSAPublicKey(String name) throws RemoteException{
 		int index = clients.indexOf(name);
 		if (index == -1)
@@ -200,6 +258,12 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 		return cryptos.get(index).getRSAPublicKey();
 	}
 
+	/**	logout method
+	*	This method attempts to log a Client out from the Room.
+	*	@param name: remove given Client from Room.
+	*	@throws RemoteException: if connection breaks.
+	*	@returns true, if logout was successfull
+	*/
 	public boolean logout(String name) throws RemoteException{
 		int index = clients.indexOf(name);
 		if (index == -1)
@@ -211,6 +275,12 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 		return true;
 	}
 
+	/**	addMessages method
+	*	This method extracts messages from the client_messages vector and
+	*	adds them to the messages vector containing all.
+	*	@throws RemoteException: if connection breaks.
+	*	@returns true, if message was added
+	*/
 	public boolean addMessages() throws RemoteException{//idea: sort client_messages copy by date
 		boolean added = false;
 		Message m;
@@ -225,6 +295,14 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 		return added;
 	}
 
+	/**	submitMessage method
+	*	This method accepts a message encrypted for system.
+	*	It is decrypted and after the senders signature is verified, it
+	*	is added to client messages.
+	*	@param m: Message to submit
+	*	@throws RemoteException: if connection breaks.
+	*	@returns true, if submitting was successfull
+	*/
 	public boolean submitMessage(Message m) throws RemoteException{
 		int index = clients.indexOf(m.getAuthor());
 		if (index == -1 || client_messages.get(index) != null)
@@ -240,6 +318,10 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 		}
 	}
 
+	/**	requestNewMessages method
+	*	This method is used to request all messages submitted after given date
+	*	and send return them encrypted to given user.
+	*/
 	public Vector<Message> requestNewMessages(Date date, String name) throws RemoteException{
 		Vector<Message> news = new Vector<Message>();
 		int index = clients.indexOf(name);
@@ -263,6 +345,12 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 		return news;
 	}
 
+	/**	makeOneTimeKey method
+	*	This method creates a new oneTimeKey for a new Client to register.
+	*	It has to be sent to the new Client on a different way though.
+	*	@throws RemoteException: if connection breaks.
+	*	@returns oneTimeKey as String.
+	*/
 	public String makeOneTimeKey() throws RemoteException{
 		one_time_key = "";
 		SecureRandom srand = new SecureRandom();
@@ -273,6 +361,13 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 		return one_time_key;
 	}
 
+	/**	injectCommand method
+	*	This method takes a message and processes it, executing the command
+	*	it contains. Possible commands are makeonetimekey, help, userlist, ...
+	*	@param m: Command to execute
+	*	@throws RemoteException: if connection breaks.
+	*	@returns Message which is the systems answer to the command
+	*/
 	public Message injectCommand(Message m) throws RemoteException{
 		int index = clients.indexOf(m.getAuthor());
 		if (index == -1 || client_messages.get(index) != null)
@@ -304,6 +399,11 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 		return reply;
 	}
 
+	/**	printHelp method
+	*	This method prints help for the possible commands.
+	*	@throws RemoteException: if connection breaks.
+	*	@returns help for commands as String.
+	*/
 	public String printHelp() throws RemoteException{
 		String result = "!help: to get information about commands\n" +
 					"!makeOneTimeKey: to create a key for a new user (usable only once)\n" +
@@ -311,6 +411,11 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 		return result;
 	}
 
+	/**	printUserList method
+	*	This method returns the list of all online users names as String.
+	*	@throws RemoteException: if connection breaks.
+	*	@returns names of all online users as String
+	*/
 	public String printUserList() throws RemoteException{
 		String result = "";
 		for (String user : clients)
@@ -318,6 +423,12 @@ public class Room extends UnicastRemoteObject implements RoomInterface{
 		return result.substring(0, result.length()-2);
 	}
 
+	/**	shutdown method
+	*	This method performs a shutdown of the server. All clients are
+	*	logged out. On success, true is returned.
+	*	@throws RemoteException: if connection breaks.
+	*	@returns true, if shutting down didnt yield any problems.
+	*/
 	public boolean shutdown() throws RemoteException{
 		boolean result = true;
 		for(int i=1; i<clients.size(); i++){		//all users except system

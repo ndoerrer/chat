@@ -5,7 +5,17 @@ import chAT.global.*;
 import java.security.PublicKey;
 import java.util.Base64;
 
+/**	TestCrypto class
+*	This class is implemented for testing purposes only.
+*	It uses different features of the Crypto class to check the
+*	functionality of en/decrypten, signing and verification.
+*/
 public class TestCrypto{
+	/**	toHexString method
+	*	This method converts a byte array to a hexadecimal String.
+	*	@param bytes: byte array to convert.
+	*	@returns hexadecimal representation of the byte array.
+	*/
 	public static String toHexString(byte [] bytes){
 		String result = "";
 		for (byte b : bytes)
@@ -13,6 +23,9 @@ public class TestCrypto{
 		return result;
 	}
 
+	/**	main method
+	*	This method handles the main program flow of TestCrypto class.
+	*/
 	public static void main(String [] args){
 		Crypto alice_crypto = new Crypto();
 		Crypto bob_crypto = new Crypto();

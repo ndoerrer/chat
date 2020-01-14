@@ -11,6 +11,10 @@ import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.awt.Font;
 
+/**	Gui class
+*	The Gui class represents a possible user frontend for the Client class.
+*	It handles input and output using threads.
+*/
 public class Gui{
 	JPanel content_pane;
 	MessagePanel m_panel;
@@ -22,6 +26,13 @@ public class Gui{
 	String myname;
 	Crypto crypto;
 
+	/**	Gui constructor
+	*	This constructor initializes the Gui with a RoomInterface to bind to,
+	*	a Clients name and a crypto Instance.
+	*	@param roomI_in: RoomInterface to bind to.
+	*	@param myname_in: Name of the Client
+	*	@param crypto_in: Crypto instance to use for signing and en/decryption.
+	*/
 	public Gui(RoomInterface roomI_in, String myname_in, Crypto crypto_in){
 		roomI = roomI_in;
 		myname = myname_in;

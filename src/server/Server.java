@@ -18,14 +18,29 @@ import java.net.UnknownHostException;
 import java.net.NetworkInterface;
 import java.util.Enumeration;
 
+/**	ServerShutdownThread class
+*	This class is meant to be run as a Thread as shutdown hook for the
+*	running Server program.
+*	It takes care of a clean shutdown.
+*/
 class ServerShutdownThread extends Thread {
 	private Room room;
 
+	/**	ServerShutdownThread constructor
+	*	This constructor creates a ServerShutdownThread instance
+	*	bound to one specific Room.
+	*	@param room_in: Room to bind to.
+	*/
 	public ServerShutdownThread(Room room_in) {
 		super();
 		room = room_in;
 	}
 
+	/**	run method
+	*	This is the Threads main method. It performs a clean shutdown of
+	*	the Room. The room is ordered to log out all clients. Afterwards
+	*	this Thread waits for two seconds, then terminates.
+	*/
 	public void run() {
 		boolean success = false;
 		try {
@@ -47,7 +62,18 @@ class ServerShutdownThread extends Thread {
 	}
 }
 
+/**	Server class
+*	This class handles all things on server side. It is meant to be run
+*	as an executable class - program.
+*	It creates a Room and an according RoomInterface, offers it via RMI
+*	to Clients and keeps it running.
+*/
 public class Server{
+	/**	checkInterfaces method
+	*	This method tries to find all available network interfaces. Then
+	*	it returns the "most appropriate" address.
+	*	@returns address of the Server as String.
+	*/
 	private static String checkInterfaces(){
 		String host="";
 		boolean loopback = true;
@@ -89,6 +115,15 @@ public class Server{
 		return host;
 	}
 
+	/**	offer method
+	*	This method gets a RoomInterface, host, name and port and creates a
+	*	RMI-registry at the port to then make the RoomInterface accessible
+	*	over the RMI-registry at given host, port and name.
+	*	@param r: RoomInterface to offer.
+	*	@param host: host name of the rmi-registry (probably own).
+	*	@param name: name of the Room to offer.
+	*	@param port: port to offer the RoomInterface on.
+	*/
 	public static void offer(RoomInterface r, String host, String name, int port){
 		try {
 			LocateRegistry.createRegistry(port);
@@ -111,6 +146,10 @@ public class Server{
 		}
 	}
 
+	/**	main method
+	*	This method handles the main execution flow of the Server program.
+	*	@param args: Command line arguments (args[0] is name)
+	*/
 	public static void main(String [] args) throws RemoteException{		//TODO: better way??
 		Room room;
 		RoomInterface roomI;

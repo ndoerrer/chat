@@ -25,12 +25,26 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.File;
 
+/**	ClientShutdownThread class
+*	Instances of this class are runnable as a thread and perform a clean
+*	Client shutdown. It is meant to be attached via hook to a client instance.
+*	Its main task is to store the current timestamp clientside so that upon
+*	restarting the Client, the missed messages can be recovered.
+*/
 class ClientShutdownThread extends Thread {
 	private RoomInterface roomI;
 	private String myname;
 	private Date date;
 	private String roomname;
 
+	/**	ClientShutdownThread constructor
+	*	This constructor initializes a ClientShutdownThread instance.
+	*	It takes a RoomInterface, a nickname, a date and a roomname as params.
+	*	@param roomI_in: RoomInterface instance to handle on shutdown
+	*	@param myname_in: nickname of the client
+	*	@param date_in: current date (and time) as Date instance
+	*	@param roomname_in: name of the room
+	*/
 	public ClientShutdownThread(RoomInterface roomI_in, String myname_in,
 									Date date_in, String roomname_in) {
 		super();
@@ -40,6 +54,10 @@ class ClientShutdownThread extends Thread {
 		roomname = roomname_in;
 	}
 
+	/**	storeTimestamp method
+	*	This method determines the current date (and time) and stores it
+	*	in the file "../data/" + roomname + "/" + myname + ".time"
+	*/
 	private void storeTimestamp(){
 		String timestamp_file = "../data/" + roomname + "/" + myname + ".time";
 		if (!(new File(timestamp_file)).exists()){
@@ -60,6 +78,10 @@ class ClientShutdownThread extends Thread {
 		}
 	}
 
+	/**	run method
+	*	This method is run on thread execution.
+	*	It stores the timestamp and then performs a logout.
+	*/
 	public void run() {
 		storeTimestamp();
 		boolean success = false;
@@ -78,7 +100,19 @@ class ClientShutdownThread extends Thread {
 	}
 }
 
+/**	Client class
+*	This class handles all the functionality on Client side.
+*	Its main is meant to be executed to connect to a server and perform
+*	the communication.
+*/
 public class Client{
+	/**	loadDate method
+	*	This method loads a previously stored timestamp file and returns
+	*	The stored date as Date instance.
+	*	@param roomname: name of the room to load timestamp for
+	*	@param myname: nickname to load timestamp for
+	*	@returns Date instance representing contents of the timestamp file
+	*/
 	private static Date loadDate(String roomname, String myname){
 		String timestamp_file = "../data/" + roomname + "/" + myname + ".time";
 		long milliseconds = 0;
@@ -95,6 +129,15 @@ public class Client{
 		return new Date();
 	}
 
+	/**	findRoom method
+	*	This method searches for a room with given name at the rmi-registry
+	*	of given host under given port. If one is found it is returned as
+	*	RoomInterface, otherwise the program exits.
+	*	@param host: hostname (ipv4, ipv6 or domain name) to request from
+	*	@param name: name of the room to request
+	*	@param port: port of the rmi-registry at host
+	*	@returns RoomInterface if one is found under given parameters
+	*/
 	private static RoomInterface findRoom(String host, String name, int port) {
 		RoomInterface roomI = null;
 		try{
@@ -106,15 +149,23 @@ public class Client{
 			System.out.println("NotBoundException: couldnt lookup " + name);
 			System.exit(1);
 		} catch (RemoteException e) {
-			System.out.println("RemoteExpcetion: couldnt lookup " + name);
+			System.out.println("RemoteException: couldnt lookup " + name);
 			System.exit(2);
 		} catch (MalformedURLException e){
-			System.out.println("MalformedURLExpcetion: couldnt lookup " + name);
+			System.out.println("MalformedURLException: couldnt lookup " + name);
 			System.exit(3);
 		}
 		return roomI;
 	}
 
+	/**	main method
+	*	This method controls the execution flow of the Client program.
+	*	It parses command line arguments, then tries to connect to a host
+	*	to retrieve a RoomInterface from to then log into.
+	*	On success it continuously requests updates from the server and
+	*	allows for messages and commands to be sent.
+	*	TODO: kinda messy
+	*/
 	public static void main(String [] args){
         Console console = System.console();
 		if (console == null) {

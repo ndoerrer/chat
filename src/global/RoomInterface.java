@@ -7,6 +7,10 @@ import java.util.Vector;
 
 import java.security.PublicKey;
 
+/**	RoomInterface interface
+*	This interface provides a mean of access for Clients to interact with
+*	Room instances.
+*/
 public interface RoomInterface extends Remote {
 	public int userStatus(String name) throws RemoteException;
 	public boolean registerClient(String name, String key, String passwd) throws RemoteException;

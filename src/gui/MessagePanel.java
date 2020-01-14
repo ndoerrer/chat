@@ -15,6 +15,10 @@ import java.awt.Font;
 import java.awt.Color;
 import java.util.Date;
 
+/**	MessagePanel class
+*	This class is used to display Messages for the users using a GUI.
+*	It refreshes at a certain rate and contains all incoming message stuff.
+*/
 public class MessagePanel extends JScrollPane{
 	private RoomInterface roomI;
 	private String myname;
@@ -26,6 +30,16 @@ public class MessagePanel extends JScrollPane{
 	private JScrollBar scrollbar;
 	private Font myFont;
 
+	/**	MessagePanel constructor
+	*	This constructor initializes a MessagePanel instance by setting up
+	*	the RoomInterface, Crypto, name, font, delay and JPanel to write to.
+	*	@param content_in: JPanel to write to.
+	*	@param roomI_in: RoomInterface to bind to.
+	*	@param myname_in: name of the Client.
+	*	@param crypto_in: Crypto to use for signing and de/encrypting
+	*	@font_in: text font to use, displaying messages.
+	*	@delay_in: delay that controls the MessageCollector invokation frequency
+	*/
 	public MessagePanel(JPanel content_in, RoomInterface roomI_in, String myname_in,
 											Crypto crypto_in, Font font_in, int delay_in){
 		super(content_in);
@@ -41,11 +55,26 @@ public class MessagePanel extends JScrollPane{
 		new Timer(delay, m_collector).start();
 	}
 
+	/**	MessagePanel reduced constructor
+	*	This constructor initializes a MessagePanel instance by setting up
+	*	the RoomInterface, Crypto, name, font and JPanel to write to.
+	*	Delay is chosen as default.
+	*	@param content_in: JPanel to write to.
+	*	@param roomI_in: RoomInterface to bind to.
+	*	@param myname_in: name of the Client.
+	*	@param crypto_in: Crypto to use for signing and de/encrypting
+	*	@font_in: text font to use, displaying messages.
+	*/
 	public MessagePanel(JPanel content_in, RoomInterface roomI_in, String myname_in,
 											Crypto crypto_in, Font font_in){
 		this(content_in, roomI_in, myname_in, crypto_in, font_in, DEFAULT_DELAY);
 	}
 
+	/**	addMessage method
+	*	This method adds a Message instance to the Panel.
+	*	It is set in a color depending on the author.
+	*	@param m: Message to be added.
+	*/
 	protected void addMessage(Message m){
 		m.decrypt(crypto);
 		JLabel label = new JLabel(m.toString());

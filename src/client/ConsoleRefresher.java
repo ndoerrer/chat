@@ -6,6 +6,11 @@ import java.util.Date;
 import java.rmi.RemoteException;
 import java.util.Vector;
 
+/**	ConsoleRefresher class
+*	This class takes care of repeatedly at a fixed interval requesting updates
+*	from the room. It also prints the news into the terminal. If a GUI is used,
+*	ConsoleRefresher is not necessary.
+*/
 public class ConsoleRefresher extends Thread{
 	private Date date;
 	private RoomInterface roomI;
@@ -13,6 +18,15 @@ public class ConsoleRefresher extends Thread{
 	private String myname;
 	private final int refresher_sleep = 200;
 
+	/**	ConsoleRefresher constructor
+	*	This constructor initializes a ConsoleRefresher instance.
+	*	It sets myname and date according to inputs and stores references
+	*	to the RoomInterface and the Crypto instance that is used.
+	*	@param myname_in: nickname of the Client
+	*	@param date_in: current Date (startpoint of updates)
+	*	@param roomI_in: RoomInterface to bind ConsoleRefresher to
+	*	@param crypto_in: Crypto instance to use
+	*/
 	public ConsoleRefresher(String myname_in, Date date_in, RoomInterface roomI_in,
 											Crypto crypto_in){
 		super();
@@ -22,6 +36,11 @@ public class ConsoleRefresher extends Thread{
 		myname = myname_in;
 	}
 
+	/**	run method
+	*	This is the threads main method and controls execution flow.
+	*	New messages are requested and displayed. Afterwards it sleeps for
+	*	refresher_sleep milliseconds.
+	*/
 	public void run(){
 		while(true){
 			try{

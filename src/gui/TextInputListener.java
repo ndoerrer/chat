@@ -8,6 +8,10 @@ import javax.swing.JTextField;
 
 import java.rmi.RemoteException;
 
+/**	TextInputListener class
+*	This class keeps track of user text input and takes care of submitting
+*	Messages and commands to the Room.
+*/
 public class TextInputListener implements ActionListener{
 	RoomInterface roomI;
 	String myname;
@@ -15,8 +19,18 @@ public class TextInputListener implements ActionListener{
 	JTextField input_field;
 	MessagePanel m_panel;
 
+	/**	TextInputListener constructor
+	*	This constructor initializes a TextInputListener with a JTextField to
+	*	read from, a RoomInterface to communicate with, a name, a Crypto
+	*	instance and a MessagePanel.
+	*	@param input_field_in: JTextField to listen to.
+	*	@param roomI_in: RoomInterface to send Messages to.
+	*	@param myname_in: name of the Client.
+	*	@param crypto_in: Crypto instance to use for signing and encrypting.
+	*	@param m_panel_in: MessagePanel to write output to.
+	*/
 	public TextInputListener(JTextField input_field_in, RoomInterface roomI_in,
-									String myname_in, Crypto crypto_in, MessagePanel m_panel_in){
+						String myname_in, Crypto crypto_in, MessagePanel m_panel_in){
 		super();
 		roomI = roomI_in;
 		myname = myname_in;
@@ -25,6 +39,11 @@ public class TextInputListener implements ActionListener{
 		m_panel = m_panel_in;
 	}
 
+	/**	actionPerformed method
+	*	This method is called upon ActionEvent occuring.
+	*	It submits a new message to the room or injects a command.
+	*	@param evt: Event that occured (e.g. Enter Press)
+	*/
 	public void actionPerformed(ActionEvent evt) {
 		String text = input_field.getText();
 		input_field.setText("");
